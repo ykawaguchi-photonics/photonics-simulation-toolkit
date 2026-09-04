@@ -1,0 +1,72 @@
+component: bend
+parameters:
+  radius_um: 2.0
+  arm_length_um: 3.0
+  wg_width_um: 0.5
+  core_index: 2.7
+  clad_index: 1.44
+  bend_type: circular
+source_artifacts:
+  circular: data/sparams/bend/baseline/bend_baseline_circular
+  euler: data/sparams/bend/baseline/bend_baseline_euler
+fitted_model:
+  circular:
+    loss_db_floor: 0.11012654129875427
+    loss_db_amplitude: 16.20728920111804
+    loss_db_decay_um: 0.33152828360860115
+    phase_slope: -7.494754886301843
+    phase_intercept: 7.9420217900120145
+  euler:
+    loss_db_floor: 5.9732584510996254e-15
+    loss_db_amplitude: 42.03091420793405
+    loss_db_decay_um: 0.3390503027278876
+    phase_slope: -6.506011962772335
+    phase_intercept: 8.178449276949735
+provenance:
+  method: baseline_plus_radius_sweep_fit
+  date: '2026-09-01'
+  meep_version: 1.34.0
+validation:
+  circular:
+    energy_conservation:
+      max_deviation_port1: 0.007208613964927668
+      max_deviation_port2: 0.016066230431215134
+      max_deviation: 0.016066230431215134
+      max_loss_fraction_allowed: 0.15
+      tolerance: 0.08
+      passed: true
+    reciprocity:
+      max_diff_s12_s21: 0.0002057133563100705
+      max_diff_s11_s22: 0.020228775428487198
+      max_diff: 0.020228775428487198
+      tolerance: 0.1
+      passed: true
+    passivity:
+      max_magnitude: 0.9793651852246654
+      tolerance: 0.02
+      passed: true
+    passed: true
+  euler:
+    energy_conservation:
+      max_deviation_port1: 0.03497260427236126
+      max_deviation_port2: 0.04461559006683902
+      max_deviation: 0.04461559006683902
+      max_loss_fraction_allowed: 0.15
+      tolerance: 0.08
+      passed: true
+    reciprocity:
+      max_diff_s12_s21: 0.0001907358397971503
+      max_diff_s11_s22: 0.020965673127621556
+      max_diff: 0.020965673127621556
+      tolerance: 0.1
+      passed: true
+    passivity:
+      max_magnitude: 0.9910247702745826
+      tolerance: 0.02
+      passed: true
+    passed: true
+rationale: Baseline geometry/S-parameters validated at radius_um=2.0 for both bend
+  types (Sections 4.1-4.2, 6). Insertion loss fit as an exponential decay to a floor,
+  and phase fit linearly, each against radius_um per bend type, from an independent
+  radius_um=1.0-3.0um sweep (Section 4.2b/5), so the resulting analytic model generalizes
+  to arbitrary radii for circuit-level (SAX) composition.

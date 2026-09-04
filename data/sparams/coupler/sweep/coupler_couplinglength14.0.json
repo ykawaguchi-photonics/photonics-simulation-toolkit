@@ -1,0 +1,36 @@
+{
+  "component": "coupler",
+  "coupling_length_um": 14.0,
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_in_top": 0.0,
+      "max_deviation_in_bot": 0.0,
+      "max_deviation": 0.0,
+      "max_expected_loss": 0.08,
+      "tolerance": 0.05,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_through": 3.3938145589273994e-05,
+      "max_diff_cross": 8.696079044023808e-06,
+      "max_diff_reflect": 3.7266675049357767e-07,
+      "max_diff": 3.3938145589273994e-05,
+      "tolerance": 0.05,
+      "passed": true
+    },
+    "passivity": {
+      "max_power_fraction": 0.6447006284587605,
+      "tolerance": 0.03,
+      "passed": true
+    },
+    "passed": true
+  },
+  "meep_version": "1.34.0",
+  "creation_date": "2026-09-03",
+  "port_names": [
+    "in_top",
+    "in_bot",
+    "out_top",
+    "out_bot"
+  ]
+}

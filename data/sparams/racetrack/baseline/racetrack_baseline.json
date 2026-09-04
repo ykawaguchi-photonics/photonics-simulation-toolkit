@@ -1,0 +1,71 @@
+{
+  "component": "racetrack",
+  "geometry_params": {
+    "radius_um": 5.0,
+    "gap_um": 0.2,
+    "coupling_length_um": 3.0,
+    "wg_width_um": 0.5,
+    "wg_height_um": 0.22
+  },
+  "material_params": {
+    "core_index": 2.7,
+    "clad_index": 1.44,
+    "ring_conductivity": 0.001
+  },
+  "polarization": "TE (Hz out-of-plane -- confirmed dominant field component for this device's eig_band=1 mode, see Section 6)",
+  "meep_resolution": 25,
+  "simulation_params": {
+    "wl_min_um": 1.3,
+    "wl_max_um": 1.4,
+    "n_freq": 301,
+    "dpml_um": 1.0,
+    "margin_um": 0.5,
+    "dft_decay_tol": 0.001,
+    "min_sim_time": 7000,
+    "max_sim_time": 25000
+  },
+  "meep_version": "1.34.0",
+  "python_version": "3.10.20",
+  "creation_date": "2026-08-31",
+  "validation": {
+    "energy_conservation": {
+      "port1": {
+        "off_resonance_baseline": 0.9972073884909577,
+        "n_off_resonance_points": 83,
+        "n_resonance_points": 218,
+        "off_resonance_deviation": 0.002465199990212774,
+        "max_physicality_excess": 0.0,
+        "passed": true
+      },
+      "port2": {
+        "off_resonance_baseline": 0.9971223061812046,
+        "n_off_resonance_points": 77,
+        "n_resonance_points": 224,
+        "off_resonance_deviation": 0.002547219723918026,
+        "max_physicality_excess": 0.0,
+        "passed": true
+      },
+      "off_resonance_tol": 0.02,
+      "min_dip_depth": 0.1,
+      "passivity_tol": 0.01,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_s12_s21": 0.027853213182572046,
+      "max_diff_s11_s22": 0.29373560188175335,
+      "max_diff": 0.29373560188175335,
+      "tolerance": 0.35,
+      "passed": true
+    },
+    "passivity": {
+      "max_magnitude": 0.9996308429046289,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "passed": true
+  },
+  "port_names": [
+    "o1",
+    "o2"
+  ]
+}

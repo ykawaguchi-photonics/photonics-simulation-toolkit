@@ -1,0 +1,61 @@
+{
+  "component": "racetrack",
+  "swept_params": {
+    "coupling_length_um": 2.5
+  },
+  "geometry_params": {
+    "radius_um": 5.0,
+    "gap_um": 0.2,
+    "coupling_length_um": 2.5,
+    "wg_width_um": 0.5,
+    "wg_height_um": 0.22,
+    "wl_min_um": 1.305,
+    "wl_max_um": 1.32,
+    "dpml_um": 1.0,
+    "margin_um": 0.5
+  },
+  "meep_resolution": 25,
+  "meep_version": "1.34.0",
+  "creation_date": "2026-08-31",
+  "validation": {
+    "energy_conservation": {
+      "port1": {
+        "off_resonance_baseline": 0.9981631385605383,
+        "n_off_resonance_points": 263,
+        "n_resonance_points": 139,
+        "off_resonance_deviation": 0.005632652639376401,
+        "max_physicality_excess": 0.0,
+        "passed": true
+      },
+      "port2": {
+        "off_resonance_baseline": 0.9980939564700271,
+        "n_off_resonance_points": 263,
+        "n_resonance_points": 139,
+        "off_resonance_deviation": 0.005730511736375177,
+        "max_physicality_excess": 0.0,
+        "passed": true
+      },
+      "off_resonance_tol": 0.02,
+      "min_dip_depth": 0.1,
+      "passivity_tol": 0.01,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_s12_s21": 0.00046151986886195783,
+      "max_diff_s11_s22": 0.045278891938277624,
+      "max_diff": 0.045278891938277624,
+      "tolerance": 0.35,
+      "passed": true
+    },
+    "passivity": {
+      "max_magnitude": 0.9996397003984271,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "passed": true
+  },
+  "port_names": [
+    "o1",
+    "o2"
+  ]
+}

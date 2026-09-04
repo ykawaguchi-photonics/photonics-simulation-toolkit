@@ -1,0 +1,12 @@
+length_um,wl_min_um,wl_max_um,n_freq,artifact_path,validation_passed
+10.0,1.3,1.4,21,../data/sparams/waveguide/sweep/waveguide_length10.0,True
+10.1,1.3,1.4,21,../data/sparams/waveguide/sweep/waveguide_length10.1,True
+10.2,1.3,1.4,21,../data/sparams/waveguide/sweep/waveguide_length10.2,True
+10.3,1.3,1.4,21,../data/sparams/waveguide/sweep/waveguide_length10.3,True
+10.4,1.3,1.4,21,../data/sparams/waveguide/sweep/waveguide_length10.4,True
+10.5,1.3,1.4,21,../data/sparams/waveguide/sweep/waveguide_length10.5,True
+10.6,1.3,1.4,21,../data/sparams/waveguide/sweep/waveguide_length10.6,True
+10.7,1.3,1.4,21,../data/sparams/waveguide/sweep/waveguide_length10.7,True
+10.8,1.3,1.4,21,../data/sparams/waveguide/sweep/waveguide_length10.8,True
+10.9,1.3,1.4,21,../data/sparams/waveguide/sweep/waveguide_length10.9,True
+11.0,1.3,1.4,21,../data/sparams/waveguide/sweep/waveguide_length11.0,True

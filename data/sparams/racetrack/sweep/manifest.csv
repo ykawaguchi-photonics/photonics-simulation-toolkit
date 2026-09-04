@@ -1,0 +1,6 @@
+coupling_length_um,wl_min_um,wl_max_um,n_freq,artifact_path,validation_passed
+2.0,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length2.0,True
+2.5,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length2.5,True
+3.0,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length3.0,True
+3.5,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length3.5,True
+4.0,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length4.0,True

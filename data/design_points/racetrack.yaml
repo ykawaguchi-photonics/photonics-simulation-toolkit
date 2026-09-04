@@ -1,0 +1,66 @@
+component: racetrack
+parameters:
+  radius_um: 5.0
+  gap_um: 0.2
+  coupling_length_um: 4.0
+  wg_width_um: 0.5
+  wg_height_um: 0.22
+  core_index: 2.7
+  clad_index: 1.44
+  ring_conductivity: 0.001
+source_artifact: data/sparams/racetrack/sweep/racetrack_coupling_length4.0
+provenance:
+  method: sweep_selection_resonance_aware_validation
+  date: '2026-08-31'
+  meep_version: 1.34.0
+validation:
+  energy_conservation:
+    port1:
+      off_resonance_baseline: 0.9965917351748541
+      n_off_resonance_points: 313
+      n_resonance_points: 89
+      off_resonance_deviation: 0.015513327751390693
+      max_physicality_excess: 0.0
+      passed: true
+    port2:
+      off_resonance_baseline: 0.9965514599461445
+      n_off_resonance_points: 313
+      n_resonance_points: 89
+      off_resonance_deviation: 0.015674874202221245
+      max_physicality_excess: 0.0
+      passed: true
+    off_resonance_tol: 0.02
+    min_dip_depth: 0.1
+    passivity_tol: 0.01
+    passed: true
+  reciprocity:
+    max_diff_s12_s21: 0.027618170731865697
+    max_diff_s11_s22: 0.2033640610821329
+    max_diff: 0.2033640610821329
+    tolerance: 0.35
+    passed: true
+  passivity:
+    max_magnitude: 0.9992707276056315
+    tolerance: 0.01
+    passed: true
+  passed: true
+rationale: Selected from the Section-9 coupling-length sweep (narrowed [2.0, 3.0,
+  4.0]um range, 1.3050-1.3200um/n_freq=402 wavelength grid) with on-resonance extinction
+  0.6810 and kappa=0.1960 (Section 10's CMT extraction), using racetrack.energy_conservation_check's
+  resonance-aware validation (Section 7) rather than the generic 2-port checks.energy_conservation_check,
+  which cannot distinguish genuine near-critical-coupling loss from a real bug. See
+  the extinction/kappa values printed and plotted above for how this point compares
+  to the other swept points.
+fitted_model:
+  radius_um: 5.0
+  coupling_length_um: 4.0
+  kappa: 0.1959691466455342
+  alpha: 0.0032508223566151953
+  n_eff: 2.356920413767061
+  fit_method: closed-form all-pass-ring CMT extraction (Bogaerts et al. 2012) from
+    the measured resonance's dip wavelength, on-resonance minimum, and FWHM linewidth,
+    refined by a local scipy.optimize.curve_fit seeded at the closed-form solution,
+    with a residual-based retry over the algebra's root ambiguity and neighboring
+    integer mode numbers -- see extract_cmt_parameters (Section 10) and this section's
+    markdown. Not a hand-tuned or blind-seeded fit; RMS residual recorded below.
+  fit_residual_rms: 0.006386064183927551

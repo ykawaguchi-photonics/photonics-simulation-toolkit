@@ -1,0 +1,8 @@
+coupling_length_um,artifact_path,validation_passed
+2.0,../data/sparams/coupler/sweep/coupler_couplinglength2.0,True
+6.0,../data/sparams/coupler/sweep/coupler_couplinglength6.0,True
+10.0,../data/sparams/coupler/sweep/coupler_couplinglength10.0,True
+14.0,../data/sparams/coupler/sweep/coupler_couplinglength14.0,True
+18.0,../data/sparams/coupler/sweep/coupler_couplinglength18.0,True
+22.0,../data/sparams/coupler/sweep/coupler_couplinglength22.0,True
+26.0,../data/sparams/coupler/sweep/coupler_couplinglength26.0,True

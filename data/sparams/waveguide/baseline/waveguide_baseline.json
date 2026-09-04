@@ -1,0 +1,54 @@
+{
+  "component": "waveguide",
+  "geometry_params": {
+    "wg_width_um": 0.5,
+    "length_um": 4.0
+  },
+  "material_params": {
+    "core_index": 2.7,
+    "clad_index": 1.44
+  },
+  "polarization": "TE (Hz out-of-plane, confirmed dominant -- see Section 4.3)",
+  "geometry_source": "gdsfactory (build_gf_component -> build_geometry_from_gds)",
+  "meep_resolution": 20,
+  "simulation_params": {
+    "wl_min_um": 1.3,
+    "wl_max_um": 1.4,
+    "n_freq": 21,
+    "dpml_um": 1.0,
+    "cell_x_um": 8.0,
+    "cell_y_um": 4.0,
+    "port_offset_um": 2.0,
+    "source_offset_um": 2.5
+  },
+  "meep_version": "1.34.0",
+  "python_version": "3.10.20",
+  "creation_date": "2026-09-01",
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_port1": 0.0004004636860726052,
+      "max_deviation_port2": 0.00040022985383325604,
+      "max_deviation": 0.0004004636860726052,
+      "max_loss_fraction_allowed": 0.0,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_s12_s21": 5.429830699550995e-06,
+      "max_diff_s11_s22": 3.264069561651544e-05,
+      "max_diff": 3.264069561651544e-05,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "passivity": {
+      "max_magnitude": 1.0000045347114301,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "passed": true
+  },
+  "port_names": [
+    "o1",
+    "o2"
+  ]
+}

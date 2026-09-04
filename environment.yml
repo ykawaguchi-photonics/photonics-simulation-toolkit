@@ -1,0 +1,32 @@
+name: mp
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pymeep=1.34
+  - numpy=2.2
+  - scipy=1.15
+  - matplotlib=3.10
+  - jupyterlab=4.6
+  - notebook=7.6
+  - pyyaml
+  - pip
+  - pip:
+      - -e .
+      - sax==0.14.2
+      - gdsfactory==8.32.2
+      # gdsfactory is the geometry source for meep_sim/gds_import.py and every
+      # component's build_gf_component() -- a hard dependency, not exploratory
+      # (it was previously imported by spiral_gds.py/notebook 07 without being
+      # declared here).
+      # klujax is deliberately NOT installed: at the time of writing, the
+      # latest klujax (0.4.3) is incompatible with sax's default backend
+      # (missing coo_mul_vec) and the last klujax compatible with that
+      # backend (0.3.1) predates jax 0.6's API and fails to import. sax
+      # falls back cleanly to its pure-JAX "filipsson_gunnar" backend
+      # without klujax -- fine at this project's circuit sizes.
+      - autograd
+      - nlopt
+      # autograd + nlopt back meep.adjoint's topology optimization, used by
+      # notebooks/03_bend_topology_optimization.ipynb (gradient-based
+      # MaterialGrid density optimization via NLopt's MMA algorithm).

@@ -1,0 +1,47 @@
+component: mzm
+parameters:
+  coupling_length_um: 13.848128928800111
+  gap_um: 0.2
+  wg_width_um: 0.5
+  wg_height_um: 0.22
+  core_index: 2.7
+  clad_index: 1.44
+  sbend_len_um: 6.0
+  wide_sep_um: 2.0
+  delta_n_vpi: 0.002
+  sigma_um: 3.0
+  margin_sigma: 4.0
+arm_length_um: 354.88235294117646
+plateau_length_um: 330.88235294117646
+gamma_core_prior: 1.02
+gamma_core_measured: 0.9358498707616133
+dphi_meep_at_vpi_pi: 0.9174998732956993
+source_artifact: data/sparams/mzm/baseline/mzm_baseline
+provenance:
+  method: vpi_defined_arm_length_derivation
+  date: '2026-09-03'
+  meep_version: 1.34.0
+validation:
+  energy_conservation:
+    max_deviation_port1: 0.0
+    max_deviation_port2: 0.0
+    max_deviation: 0.0
+    max_expected_loss: 0.08
+    tolerance: 0.08
+    passed: true
+  reciprocity:
+    max_diff: 0.00013225902469494563
+    tolerance: 0.05
+    passed: true
+  passivity:
+    max_power_fraction: 0.9915672329171963
+    tolerance: 0.01
+    passed: true
+  passed: true
+rationale: 'Delta_n_vpi=0.002 is a user-specified design target (push-pull, n_upper/n_lower
+  = core_index +/- Delta_n/2), not a value found by sweep-and-select. The arm length
+  is derived from this target via an idealized formula corrected by gamma_core_prior
+  (reused from PIC_components/MZM/03_mzm_design_v4.ipynb''s own embedded-device calibration
+  at a different Delta_n regime), then Meep-validated directly (Section 10): the achieved
+  phase swing is 0.917 pi against a 1.000 pi target. Edit this rationale directly
+  if a different Delta_n_vpi or gamma_core_prior is preferred.'

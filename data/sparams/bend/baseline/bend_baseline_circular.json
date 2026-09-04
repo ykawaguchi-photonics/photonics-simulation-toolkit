@@ -1,0 +1,55 @@
+{
+  "component": "bend",
+  "geometry_params": {
+    "radius_um": 2.0,
+    "arm_length_um": 3.0,
+    "wg_width_um": 0.5,
+    "bend_type": "circular"
+  },
+  "material_params": {
+    "core_index": 2.7,
+    "clad_index": 1.44
+  },
+  "polarization": "TE (Hz out-of-plane, confirmed dominant -- see Section 4.3)",
+  "geometry_source": "gdsfactory (build_gf_component -> build_geometry_from_gds)",
+  "meep_resolution": 40,
+  "simulation_params": {
+    "wl_min_um": 1.3,
+    "wl_max_um": 1.4,
+    "n_freq": 21,
+    "dpml_um": 1.0,
+    "margin_um": 1.5,
+    "port_offset_um": 1.0,
+    "source_offset_um": 0.5
+  },
+  "meep_version": "1.34.0",
+  "python_version": "3.10.20",
+  "creation_date": "2026-09-01",
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_port1": 0.007208613964927668,
+      "max_deviation_port2": 0.016066230431215134,
+      "max_deviation": 0.016066230431215134,
+      "max_loss_fraction_allowed": 0.15,
+      "tolerance": 0.08,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_s12_s21": 0.0002057133563100705,
+      "max_diff_s11_s22": 0.020228775428487198,
+      "max_diff": 0.020228775428487198,
+      "tolerance": 0.1,
+      "passed": true
+    },
+    "passivity": {
+      "max_magnitude": 0.9793651852246654,
+      "tolerance": 0.02,
+      "passed": true
+    },
+    "passed": true
+  },
+  "port_names": [
+    "o1",
+    "o2"
+  ]
+}

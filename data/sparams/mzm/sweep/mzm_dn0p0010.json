@@ -1,0 +1,16 @@
+{
+  "component": "mzm",
+  "swept_param": "delta_n",
+  "delta_n": 0.001,
+  "meep_resolution": 25,
+  "meep_version": "1.34.0",
+  "creation_date": "2026-09-02",
+  "port_names": [
+    "in_top",
+    "in_bot",
+    "out_top",
+    "out_bot"
+  ],
+  "delta_n_lower": -0.0005,
+  "delta_n_upper": 0.0005
+}

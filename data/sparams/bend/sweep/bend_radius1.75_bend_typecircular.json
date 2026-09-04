@@ -1,0 +1,48 @@
+{
+  "component": "bend",
+  "swept_params": {
+    "radius_um": 1.75,
+    "bend_type": "circular"
+  },
+  "geometry_params": {
+    "wg_width_um": 0.5,
+    "wl_min_um": 1.3,
+    "wl_max_um": 1.4,
+    "dpml_um": 1.0,
+    "radius_um": 1.75,
+    "arm_length_um": 3.0,
+    "margin_um": 1.5,
+    "port_offset_um": 1.0,
+    "source_offset_um": 0.5
+  },
+  "meep_resolution": 40,
+  "meep_version": "1.34.0",
+  "creation_date": "2026-09-01",
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_port1": 0.0,
+      "max_deviation_port2": 0.0008748435425596224,
+      "max_deviation": 0.0008748435425596224,
+      "max_loss_fraction_allowed": 0.5,
+      "tolerance": 0.15,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_s12_s21": 0.00017848758454322414,
+      "max_diff_s11_s22": 0.01964362307581128,
+      "max_diff": 0.01964362307581128,
+      "tolerance": 0.15,
+      "passed": true
+    },
+    "passivity": {
+      "max_magnitude": 0.9699253527182069,
+      "tolerance": 0.05,
+      "passed": true
+    },
+    "passed": true
+  },
+  "port_names": [
+    "o1",
+    "o2"
+  ]
+}

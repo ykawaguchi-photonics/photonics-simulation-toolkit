@@ -1,0 +1,49 @@
+{
+  "component": "waveguide",
+  "swept_params": {
+    "length_um": 10.4
+  },
+  "geometry_params": {
+    "wg_width_um": 0.5,
+    "wl_min_um": 1.3,
+    "wl_max_um": 1.4,
+    "dpml_um": 1.0,
+    "cell_y_um": 4.0,
+    "length_um": 10.4,
+    "source_margin_um": 0.5,
+    "pml_margin_um": 0.5,
+    "port_offset_um": 2.0,
+    "source_offset_um": 2.5,
+    "cell_x_um": 8.0
+  },
+  "meep_resolution": 20,
+  "meep_version": "1.34.0",
+  "creation_date": "2026-09-01",
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_port1": 0.00048117710288209103,
+      "max_deviation_port2": 0.0005187611458092878,
+      "max_deviation": 0.0005187611458092878,
+      "max_loss_fraction_allowed": 0.0,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_s12_s21": 2.5383252683550435e-05,
+      "max_diff_s11_s22": 3.404267266059553e-05,
+      "max_diff": 3.404267266059553e-05,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "passivity": {
+      "max_magnitude": 1.000057939647444,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "passed": true
+  },
+  "port_names": [
+    "o1",
+    "o2"
+  ]
+}

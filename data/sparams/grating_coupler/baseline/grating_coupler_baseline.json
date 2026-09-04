@@ -1,0 +1,45 @@
+{
+  "component": "grating_coupler",
+  "geometry_params": {
+    "period_um": 0.5094442234013399,
+    "duty_cycle": 0.4,
+    "n_periods": 22,
+    "etch_depth_um": 0.14,
+    "si_thickness_um": 0.22,
+    "box_thickness_um": 2.0,
+    "clad_thickness_um": 2.0,
+    "wg_width_um": 0.5,
+    "fiber_angle_deg": 10.0,
+    "fiber_mfd_um": 9.2
+  },
+  "material_params": {
+    "core_index": 3.45,
+    "clad_index": 1.44,
+    "substrate_index": 3.45
+  },
+  "polarization": "TE (eig_parity=mp.TM in this rotated-axis convention; Hy dominant -- see Section 5.2)",
+  "meep_resolution": 40,
+  "simulation_params": {
+    "wl_min_um": 1.3,
+    "wl_max_um": 1.4,
+    "n_freq": 41
+  },
+  "meep_version": "1.34.0",
+  "creation_date": "2026-09-02",
+  "validation": {
+    "passivity": {
+      "max_total_power_fraction": 1.0170557313248536,
+      "tolerance": 0.02,
+      "passed": true
+    },
+    "energy_budget": {
+      "min_total_power_fraction": 0.9631218912228232,
+      "max_unaccounted_fraction": 0.15,
+      "passed": true
+    },
+    "passed": true
+  },
+  "port_names": [
+    "o1"
+  ]
+}

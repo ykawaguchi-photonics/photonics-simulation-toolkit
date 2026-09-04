@@ -1,0 +1,3 @@
+delta_L_um,delta_n,T_through,T_cross,artifact_path
+10.0,0.0,0.1307979319807218,0.8302592635536159,../data/sparams/mzm/delta_L/mzm_dL10_dn0p0000
+10.0,0.002,0.5138186172387459,0.42317616560660204,../data/sparams/mzm/delta_L/mzm_dL10_dn0p0020
