@@ -18,25 +18,25 @@
   },
   "meep_resolution": 20,
   "meep_version": "1.34.0",
-  "creation_date": "2026-09-01",
+  "creation_date": "2026-09-04",
   "validation": {
     "energy_conservation": {
-      "max_deviation_port1": 0.0004763414547761524,
-      "max_deviation_port2": 0.0005224230064355684,
-      "max_deviation": 0.0005224230064355684,
+      "max_deviation_port1": 0.00047634145467334577,
+      "max_deviation_port2": 0.0005224230064313495,
+      "max_deviation": 0.0005224230064313495,
       "max_loss_fraction_allowed": 0.0,
       "tolerance": 0.01,
       "passed": true
     },
     "reciprocity": {
-      "max_diff_s12_s21": 2.6825241028287476e-05,
-      "max_diff_s11_s22": 3.469651591673493e-05,
-      "max_diff": 3.469651591673493e-05,
+      "max_diff_s12_s21": 2.6825241068474937e-05,
+      "max_diff_s11_s22": 3.4696515921520384e-05,
+      "max_diff": 3.4696515921520384e-05,
       "tolerance": 0.01,
       "passed": true
     },
     "passivity": {
-      "max_magnitude": 1.0000602057355223,
+      "max_magnitude": 1.0000602057355203,
       "tolerance": 0.01,
       "passed": true
     },

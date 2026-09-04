@@ -18,10 +18,10 @@
   },
   "meep_resolution": 20,
   "meep_version": "1.34.0",
-  "creation_date": "2026-09-01",
+  "creation_date": "2026-09-04",
   "validation": {
     "energy_conservation": {
-      "max_deviation_port1": 0.0004089597789025401,
+      "max_deviation_port1": 0.0004089597788692334,
       "max_deviation_port2": 0.00042362218860891865,
       "max_deviation": 0.00042362218860891865,
       "max_loss_fraction_allowed": 0.0,

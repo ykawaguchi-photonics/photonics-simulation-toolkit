@@ -6,7 +6,7 @@ parameters:
   clad_index: 1.44
 source_artifact: data/sparams/waveguide/baseline/waveguide_baseline
 fitted_model:
-  n_eff: 2.4537958415381316
+  n_eff: 2.453795841570364
   lambda_um: 1.35
   fit_method: length-sweep cutback (phase slope vs L; lossless model, see docs/simulation_settings_record.md)
   length_sweep_um:
@@ -23,20 +23,20 @@ fitted_model:
   - 11.0
 provenance:
   method: baseline_plus_length_sweep_cutback_fit
-  date: '2026-09-01'
+  date: '2026-09-04'
   meep_version: 1.34.0
 validation:
   energy_conservation:
     max_deviation_port1: 0.0004004636860726052
-    max_deviation_port2: 0.00040022985383325604
+    max_deviation_port2: 0.00040022985393628474
     max_deviation: 0.0004004636860726052
     max_loss_fraction_allowed: 0.0
     tolerance: 0.01
     passed: true
   reciprocity:
-    max_diff_s12_s21: 5.429830699550995e-06
-    max_diff_s11_s22: 3.264069561651544e-05
-    max_diff: 3.264069561651544e-05
+    max_diff_s12_s21: 5.429830755323401e-06
+    max_diff_s11_s22: 3.264069561439513e-05
+    max_diff: 3.264069561439513e-05
     tolerance: 0.01
     passed: true
   passivity:
