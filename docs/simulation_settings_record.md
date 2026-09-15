@@ -338,6 +338,224 @@ magnitude, and keep the closed-form seed outright if the refined fit's residual
 is ever worse than the seed's own (confirmed this combination reliably recovers
 the seed's already-good answer rather than diverging).
 
+## `add_drop_ring.py` (add-drop ring resonator)
+
+Reuses `racetrack.py`'s exact stadium-carving ring construction (a racetrack
+already has two straight coupling segments; only one is coupled to a bus
+there) and adds a SECOND bus mirrored across the ring's own center line,
+coupled to the other straight segment with the same `gap_um`/
+`coupling_length_um` (symmetric-coupling design decision). Self-contained --
+does not import `racetrack.py` and does not route through
+`pic_toolkit.sparams`/`pic_toolkit.checks`/`pic_toolkit.sweep.grid_sweep`
+(all hardcoded to a 2x2 S-matrix), following the precedent already set by
+`coupler.py`/`mzm.py`/`mzi.py`.
+
+| Parameter | Value | Note |
+|---|---|---|
+| `gap_um` | 0.20 (fixed) | Same value and rationale as `racetrack.py` -- see the gap-sweep dead end below for why this is fixed, not swept, here too. |
+| `coupling_length_um` | 3.0 (baseline), swept 1.0-5.0 | The critical-coupling search knob, same choice as `racetrack.py`, for the same reason. |
+| `resolution`, `min_sim_time`, `ring_conductivity` | Same as `racetrack.py` | Started from racetrack's already-validated values; no resolution-sensitivity concern here since `gap_um` never changes. |
+| `reciprocity_tol` | 0.35 | Same value and same rationale as `racetrack.py`'s `RECIPROCITY_TOL` -- see below. |
+
+**Dead end: a `gap_um` sweep was tried first.** The initial design for this
+module's critical-coupling search swept `gap_um` (0.15-0.35um, `coupling_
+length_um` fixed) instead of `coupling_length_um`, reasoning that with two
+*symmetric*, equal couplers a lossless add-drop ring shows full
+through-port extinction at resonance for ANY equal `kappa1=kappa2`
+independent of gap, so the ring's own intrinsic loss should pick out a
+specific best gap. **This ran cleanly** (every point validated except the
+weakest, 0.35um -- see below) but the extinction/drop-transfer trend was
+**monotonic across the entire swept range, with no interior turnover**:
+
+| `gap_um` | through-port extinction | drop-port peak |
+|---|---|---|
+| 0.15 | 0.903 | 0.464 |
+| 0.20 | 0.626 | 0.184 |
+| 0.25 | 0.307 | 0.051 |
+| 0.30 | 0.266 | 0.023 |
+| 0.35 | 0.105 | 0.004 |
+
+The true critical-coupling gap therefore sits below 0.15um -- inside
+territory `racetrack.py`'s own predecessor (`ring.py`, since removed)
+already documented hitting a resolution/reciprocity wall on (no turnover
+found below ~0.12-0.13um). Rather than chase that wall for a second
+component, the swept knob was switched to `coupling_length_um` (fixed
+`gap_um=0.20`) -- `racetrack.py`'s own original choice, and for the same
+reason: it also has a bonus the all-pass device's own docstring doesn't
+emphasize as strongly here -- a gap sweep makes the measured S-parameters
+progressively MORE sensitive to grid resolution as the gap shrinks (fewer
+pixels resolve it), while `coupling_length_um` changes the coupling REGION
+LENGTH, a distance the grid resolves exactly as well regardless of its
+value. The abandoned gap-sweep artifacts are not deleted from
+`data/sparams/add_drop_ring/sweep/` -- they remain a valid, honestly-run
+(if ultimately not selected) result.
+
+**`gap_um=0.35`'s validation failure (energy-conservation, not a bug).**
+The weakest-coupling gap-sweep point failed the automated energy check
+(`off_resonance_deviation` ~0.07-0.09 against a 0.02 tolerance) despite a
+near-perfect median baseline (~0.9998-1.0001). Root cause: at this device's
+weakest tested coupling, the resonance dip is extremely shallow (extinction
+~10%, barely above `energy_conservation_check`'s own `min_dip_depth=0.1`
+detection threshold), so `_find_resonance_dip_spans` inconsistently
+classifies genuinely resonance-adjacent points as "off-resonance," which
+then wrongly get held to the tight lossless bound. Not investigated further
+since this sweep point was abandoned anyway (see above) -- flagged here so
+a future very-weak-coupling sweep point isn't mistaken for a real bug
+without first checking whether this is the cause.
+
+**The `coupling_length_um` sweep found a genuine interior turnover.**
+Unlike the abandoned gap sweep, extinction/drop-transfer rose across
+`[1.0, 2.0, 3.0, 4.0]` um then FELL at `5.0` um (extinction: 0.36, 0.53,
+0.63, 0.77, 0.73) -- a real peak, not an edge artifact, confirming
+`coupling_length_um` is the right knob for this device. `coupling_length_um
+=2.0`'s point failed the (tight, 0.02) off-resonance energy tolerance by a
+small margin (0.0246) -- not investigated further since it isn't the
+selected point and the deviation is far smaller than the genuine
+weak-coupling failure documented above. The selected point
+(`coupling_length_um=4.0`, `gap_um=0.2`) passed all three checks cleanly.
+
+**CMT fit quality at the selected point was initially fair, not excellent
+(RMS=0.097), then substantially improved by switching to a narrowband,
+single-resonance fit (see below).** The original 4-parameter
+(`kappa1`,`kappa2`,`alpha`,`n_eff`) fit to the full 100nm baseline band
+reproduced the correct resonance SHAPE and spacing (FSR) but visibly
+underestimated the FDTD dip depth and drop-peak height at several
+resonances (`kappa1=0.906, kappa2=0.230` -- notably asymmetric despite the
+symmetric-gap design).
+
+**Dead end: a symmetric (`kappa1=kappa2`) full-band fit is WORSE, not
+better, and the fit is provably not seed-sensitive.** Since both couplers
+share the same `gap_um`/`coupling_length_um`, a natural refinement is to
+constrain `kappa1=kappa2` (3 free parameters instead of 4), fit jointly to
+both couplers' measured spectra (`input_through`+`add_drop` as one
+"through-type" dataset, `input_drop`+`add_through` as one "drop-type"
+dataset). Tried first on the full 100nm baseline band: RMS residual got
+WORSE (0.097 -> 0.112), and -- the important diagnostic -- **10 different
+`kappa` seeds spanning 0.2-0.99 all converged to the exact same optimum**
+(`kappa=0.245`). Seed-independence like this rules out a seeding/local-minimum
+problem: the root cause is that individual resonance dip depths visibly vary
+across the 100nm band (confirmed by eye on an overlay plot -- some dips
+reach ~0.6, others only ~0.85, within the same spectrum), which no single
+constant-`(kappa,alpha,n_eff)` model, symmetric or not, can reproduce
+everywhere at once.
+
+**Fix: fit to a single, finely-resolved resonance, not the full band --
+exactly racetrack.py's own precedent.** A dedicated narrowband,
+high-density re-run at the selected `coupling_length_um=4.0`
+(`wl_min_um=1.350`, `wl_max_um=1.360`, `n_freq=401`, bracketing one
+resonance located from the Section 9 sweep) was simulated and validated
+(all checks passed) before re-fitting. The symmetric model, fit only to
+this one resonance, dropped the RMS residual to **0.0057 (input coupler
+alone), 0.0061 (add/drop coupler alone), 0.017 (both couplers combined)** --
+a 5-20x improvement over the full-band symmetric attempt, and the fitted
+curves visually hug the FDTD data closely across the whole narrowband
+window (both shoulders and the dip/peak center). This confirms the
+per-resonance-varying full-band data, not the symmetric-coupling
+assumption itself, was the real obstacle.
+
+**A real (not just full-band-averaging) discrepancy between the two
+couplers persists even on this single, well-resolved resonance.**
+Input-coupler-alone: `kappa=0.232`. Add/drop-coupler-alone: `kappa=0.266`
+-- a ~13% relative difference, much smaller than the full-band fit's ~4x
+discrepancy (0.906 vs 0.230), but not zero, and the raw reciprocity
+diagnostic (`diff_input_through_vs_add_drop`) is still ~0.21 on this
+narrowband run alone (comparable to the full-band value, ~0.15-0.23 across
+different sweep points) despite both excitations independently passing the
+tight, resonance-aware energy-conservation check. Not root-caused further
+here (would need e.g. an even longer `min_sim_time` specifically for this
+comparison, or a dedicated investigation into whether launching from the +x
+vs -x side of an otherwise-mirror-symmetric domain introduces a small
+systematic difference) -- flagged as a known, disclosed limitation. The
+SAVED `fitted_model` at this stage used the COMBINED (both-couplers-stacked)
+symmetric fit (`kappa=0.250`, RMS=0.017) as the best-available compromise --
+superseded by the independent-`kappa1`/`kappa2` fit below.
+
+**Final fix: stop constraining `kappa1=kappa2` at all -- fit both
+independently on the narrowband data.** The two directions of propagation
+through the ring are not physically identical (different launch side,
+different net path around the loop before reaching each measurement
+plane), so there's no first-principles reason the *measured* coupling
+strengths must come out equal even for a geometrically symmetric device --
+this matches the ~13% discrepancy already seen between the two
+single-coupler-alone symmetric fits above. Fit jointly to all 4 measured
+transfer functions (`input->through`, `add->drop`, `input->drop`,
+`add->through`) with independent `kappa1`,`kappa2`, multi-started from 5
+seed pairs spanning both `kappa1>kappa2` and `kappa1<kappa2` (each crossed
+with 3 candidate mode numbers, 15 total): **every seed converged to the
+same answer** (`kappa1=0.274, kappa2=0.229`, RMS=0.0081) regardless of which
+direction the seed asymmetry favored -- the same seed-independence
+diagnostic used above to rule out a fitting artifact, this time confirming
+the asymmetry itself IS real and data-supported, not an artifact of seed
+choice. RMS residual is roughly HALF the `kappa1=kappa2`-constrained fit's
+0.0171 on the identical narrowband data. This is now the actual SAVED
+`fitted_model`.
+
+**Mode-number ambiguity, disclosed rather than resolved.** Across the 3
+candidate mode numbers (`m`, `m-1`, `m+1`), residuals differed by <0.001% --
+statistically indistinguishable, expected for a single-resonance fit (only
+a multi-resonance fit constrains the ABSOLUTE mode order, and the full-band
+data has its own per-resonance-variation problem documented above). The
+seeded mode number (`n_eff=2.438`, consistent with the earlier symmetric
+fits and reasonably close to `racetrack.py`'s own validated ~2.36-2.41 range
+for the same cross-section) is kept rather than chasing a meaningless
+residual difference toward a neighboring candidate (`n_eff=2.40` or `2.47`).
+
+**Cell sizing for an asymmetric-about-origin geometry.** `racetrack.py`'s
+own `cell_y` formula assumes only ONE bus needs dpml+margin clearance (the
+far side is empty cladding out to the PML). Naively extending that formula
+by adding one bus-width's worth of space undersized the domain here: the
+ring's center line (`ring_center_y`) is not at `y=0`, so the two buses
+(mirrored across `ring_center_y`, not across `y=0`) sit at different
+distances from the Meep cell's own center. Sizing `cell_y` from the two
+buses' *total span* put barely-insufficient clearance (1.4um against a
+required 1.5um dpml+margin) on whichever bus happened to sit farther from
+`y=0`. **Fix:** `cell_y` is instead sized from `2 * (max(bus_y,
+abs(drop_bus_y)) + wg_width_um/2 + dpml_um + margin_um)` -- clearance
+guaranteed on both sides, the nearer side simply gets harmless extra slack.
+
+**Source/monitor separation.** An early version placed the `EigenModeSource`
+directly at the same location as the self/reflection mode monitor for
+whichever port was being excited (`port_offset`, not `source_offset`),
+leaving no propagation distance between them. Fixed to source from
+`source_offset` (as `racetrack.py` does), monitor at `port_offset`.
+
+**Mode-coefficient index convention is NOT racetrack's simple "self=backward,
+other=forward" rule.** Naively porting `racetrack.py`'s two-port index
+rule (self-port -> mode index 1, every other port -> index 0) to 4 ports
+produced badly wrong results for the `add` excitation specifically (a
+resonance-scale ~72% energy-conservation deficit and >0.85 reciprocity
+mismatch, versus a normal few-percent deviation for the `input` excitation)
+-- because that rule silently assumes the excited port is always on the -x
+side, true for every 2-port device in this toolkit so far but not for
+`add` (which sits on the +x side). **The correct, general rule**: `input`
+and `drop` sit at the domain's -x edge and `through`/`add` sit at the +x
+edge (see module docstring); in the with-ring run's steady state, ANY
+energy reaching one of these edge monitors is -- by definition of a
+correctly-absorbing PML -- traveling AWAY from the device on that edge's
+own side. So the coefficient to keep is simply the backward (-x, mode
+index 1) component for `input`/`drop`, and the forward (+x, index 0)
+component for `through`/`add`, **regardless of which port was excited**.
+This was verified two ways: it makes the two independent excitation runs'
+reciprocity check pass (a real, both-runs-must-agree test, not just an
+internal consistency check), and it matches a first-principles ring-
+circulation argument (launching `input` [+x] drives the ring's input-side
+segment in +x, which forces the opposite (add/drop-side) segment to move
+in -x -- i.e. towards `drop`, not `add`).
+
+**`reciprocity_tol=0.35`, not a tighter default.** Same phenomenon
+`racetrack.py` already documented above (resonance-sampling and the
+`S11=S22` check): a narrow, high-Q resonance sampled by a finite `n_freq`
+grid makes a point-wise max-difference reciprocity check between two
+*independently* FDTD-converged runs highly sensitive to exactly which grid
+point lands nearest each run's own dip. Confirmed directly here at a
+coarse `n_freq=11` smoke-test grid: the SAME two-excitation reciprocity
+comparison swung between `max_diff=0.02` (passing a tight 0.05 tolerance)
+and `max_diff=0.12` (failing it) between otherwise-identical runs differing
+only in `min_sim_time`/`resolution` -- not evidence of a remaining port/
+direction bug, just this toolkit's already-known sampling-density
+sensitivity. Reused `racetrack.py`'s own `RECIPROCITY_TOL=0.35` value
+directly rather than re-deriving a new one from scratch.
+
 ## `coupler.py` / `mzi.py` (directional coupler, passive Mach-Zehnder interferometer)
 
 These two modules are the toolkit's first genuinely 4-port devices. `coupler.py`
@@ -951,3 +1169,403 @@ error) to `0.02` (magnitude) / `0.05` (cluster-merge distance), and the
 forward-reconstruction self-check tolerance from `1e-8` to `1e-3` to match — still tight
 enough to catch a genuine synthesis bug (the sign-convention bug above produced
 residuals of order 1, four orders of magnitude above this floor).
+
+## `circuits/mux4_tree.py` (binary-tree Mux4 WDM demultiplexer)
+
+> **Notebook consolidation note (post-hoc):** every notebook named below in
+> this section and the next (`wdm_mux_mzi_lattice_sax.ipynb`,
+> `mzi_real_fdtd_sax.ipynb`, `wdm_mux4_tree_sax.ipynb`,
+> `mux4_tree_real_fdtd_sax.ipynb`, `mux4_tree_n4_real_fdtd_sax.ipynb`,
+> `mux4_tree_n4_sax.ipynb`) has since been deleted and its content merged
+> into exactly 2 final notebooks: **`circuits/wdm_sax.ipynb`** (the
+> single-stage lattice, N=2 and N=4, ideal + real-FDTD + GDS) and
+> **`circuits/wdm_mux4_sax.ipynb`** (the 2-stage Mux4 tree, same structure,
+> GDS export N=4-only). All the numbers, findings, and derivations below
+> remain accurate as history — they now live in those 2 files instead.
+
+| Parameter | Value | Note |
+|---|---|---|
+| `delta_L_1_um` (stage 1) | 15.0 | Reuses `circuits/mzi_lattice.py`'s own reference sweep point unchanged — same value both `wdm_mux_mzi_lattice_sax.ipynb` and `mzi_real_fdtd_sax.ipynb` already use. |
+| `delta_L_2_um` (stage 2, "down") | 7.5 | The only sibling of 15.0 already present in `07_mzi.ipynb`'s 6-point sweep (`[2.5,5,7.5,10,12.5,15]`) satisfying the standard binary-tree `delta_L_1 = 2·delta_L_2` FSR-halving relation. |
+| `delta_L_2_up_um` (stage 2, "up") | `delta_L_2_um + quarter_wave_length_um(n_eff0, wl0_um)` ≈ 7.6401287 | New sweep point — see below. |
+| `quarter_wave_length_um` | `wl0_um/(4·n_eff0)` ≈ 0.1401287 µm | Universal (base-`delta_L`-independent) constant; see derivation below. |
+
+**This topology is a binary tree, not a lattice — do not confuse `mux4_tree.py` with
+`mzi_lattice.py`'s own synthesis machinery.** A lattice (`circuits/mzi_lattice.py`,
+`wdm_mux_mzi_lattice_sax.ipynb`) cascades N couplers sharing one `delta_L_um` to widen
+a single flat-top passband. This tree instead cascades 3 *independent*, ordinary
+50:50 MZIs (`kappas=[0.5,0.5]`, no lattice synthesis needed for any of them) in a
+binary-split arrangement — stage 1 splits the input into an "up"/"down" branch, and
+one stage-2 MZI per branch splits each again, giving 4 *simultaneous* channel
+outputs, matching Luceda Photonics' `muxN` training reference
+(academy.lucedaphotonics.com/training/topical_training/wdm_transmitter_mzi/muxn).
+
+**Naively giving both stage-2 branches the same `delta_L_2` does not work.** Verified
+numerically (built the actual ideal tree in SAX, both branches at `delta_L_2=7.5`, no
+correction): the "down" branch (fed by stage 1's cross output) comes out clean, but
+the "up" branch's two channels are capped at a **59.3% peak power** (degenerate double
+peaks), not the ~35-85% (ideal) figures the corrected design reaches. Root cause: a
+lossless coupler's cross port always picks up a ±90° phase relative to its own bar
+port; stage 1's bar-output envelope reaches its own peak exactly where an
+identically-parameterized stage 2 sits at its own ambiguous 50/50 crossover (not an
+extremum), so the up branch's channel pair never resolves into two clean peaks.
+Luceda's own reference design fixes this with a `center_wavelength` offset on
+`stage_2_up` only — a free phase-tuning parameter their abstract model supports
+directly. This toolkit's building blocks (`ideal_arm_model`, and per-artifact
+`models.mzi.mzi_at_sweep_point`) expose only a physical arm-length difference, so the
+fix here is instead a genuine additional length increment on `stage2_up`'s own arm:
+setting the added differential phase to exactly a quarter-FSR (π/2),
+`2π·n_eff0·Δ/wl0_um = π/2 ⟹ Δ = wl0_um/(4·n_eff0)`. Confirmed by direct numerical
+sweep (all 4 sign/branch combinations tried; only "shift up only" gives all 4 channels
+their full peak height simultaneously) — see `mux4_tree.py`'s own module docstring.
+Ideal-model result (`wdm_mux4_tree_sax.ipynb`): total power stays unitary
+(0.9999994-1.0000002 across 1.30-1.40µm); all 4 channels reach ≥0.9996 peak power at
+≈1.3184/1.3396/1.3615/1.3843µm; extinction 35.1-84.7dB.
+
+**First new Meep sweep point (`delta_L_um=7.6401287`, `stage2_up`) landed far short
+of its π/2 target — a real, physically meaningful discrepancy, not noise.** Not
+already present in `07_mzi.ipynb`'s 6-point sweep grid (spacing 2.5µm). Added via a
+new run of `meep_sim.mzi.simulate_baseline` (same params/checks as that notebook's
+own Section 10 sweep loop), saved to
+`data/sparams/mzi/sweep/mzi_deltaL7.6401287108158605.npz/.json`. Measuring the real
+S41 phase difference between this point and `stage2_down` (`delta_L=7.5`) directly
+(`mux4_tree_real_fdtd_sax.ipynb` Section 3) gave only **+44.36°**, roughly half the
+intended +90° — not the modest few-degree drift the `resolution=25` grid (~40nm
+pixels, only ~3.5px for this ~140nm correction) and n_g-fit-vs-MPB dispersion
+mismatch (~6%) would explain on their own.
+
+**Root cause, confirmed by re-examining the existing 6-point sweep's own S41
+phase**: the ideal linear model predicts `2π·n_eff0/wl0_um ≈ 11.21 rad/µm` of phase
+accumulation, so the existing sweep's 2.5µm grid spacing is itself several full 2π
+turns per step — every existing point is badly phase-aliased against its neighbors
+(local finite-difference slopes between consecutive swept points flip sign
+essentially at random: `+0.80, -0.43, -0.73, +0.78, -0.32 rad/µm`), so that grid
+cannot calibrate anything finer than itself. But the ONE fine-spaced pair available
+(`7.5` vs `7.6401287`, only `0.1401µm` apart, well inside one fringe) gives a real,
+unaliased local slope of **5.5249 rad/µm** — only about half the ideal linear-model
+slope. This is a genuine effect of the real arm geometry, not a bug: `mzi_arm`'s
+raised-cosine delay bump changes SHAPE (bend curvature, not just arc length) as
+`delta_L` grows, so the actual phase-vs-`delta_L` relationship near any operating
+point is not simply `2π·n_eff0·Δ/wl0_um` — that formula is only exact for a
+straight, dispersionless ADDED length, which this jog geometry is not.
+
+**Second point, calibrated from that measured slope rather than the ideal
+formula**: `delta_L_um = 7.5 + (π/2)/5.5249 ≈ 7.784312173071006`. If this lands
+close to the intended +90° real phase difference (checked the same way, Section 3 of
+the real-FDTD notebook), it supersedes the first point as `stage2_up`'s design value
+throughout `mux4_tree_real_fdtd_sax.ipynb`; the first point is kept on disk (not
+deleted) as the artifact underlying this very discovery. Per the user's own explicit
+allowance ("追加sweepしてOkです" — additional sweeps are fine if the arm ΔL
+calculation proves insufficient), this second point was run rather than accepting
+the first point's badly-degraded (~3dB) channel extinction as final.
+
+**Confirmed the ΔL geometry itself is realized exactly — the nonlinearity is
+physical, not a construction bug.** Checked directly (not assumed): `mzi.py`'s
+`solve_delay_arm` bisection realizes the requested `delta_L_um` as continuous
+raised-cosine arc length to machine precision (error `0.0`–`2e-15`), and the
+actual discretized geometry Meep receives (`bump_n_seg=200` chord-length
+approximation) matches the requested value to within `~5e-4`–`1e-3µm` — three to
+four orders of magnitude smaller than the effect being investigated. A broader
+self-consistency check across all 8 known `mzi.py` sweep points (using the
+measured fine-pair slope, `5.5249 rad/µm`, to predict the OTHER, 2.5µm-spaced
+points' own raw phase) failed (`23°`–`148°` residuals) — ruling out "a single
+constant effective index, different from `n_eff0`" as the explanation. The real
+cause: the ideal `2π·n_eff0·Δ/wl0_um` formula assumes a straight, dispersionless
+ADDED length, but `mzi.py`'s raised-cosine bump's curvature itself grows
+nonlinearly with `delta_L_um` (amplitude scales notably faster than length near
+this arm's operating range), so bend-induced effective-index shifts vary with
+`delta_L_um` in a way no single corrected linear slope can capture globally —
+only locally, over a small enough neighborhood (which is exactly why the second,
+locally-calibrated point above still carried an ~8.86° residual, not zero).
+
+**Does a flatter per-stage passband (N=4 couplers, not N=2) recover the lost
+extinction, given the SAME phase-calibration residual?** Quantitatively confirmed
+in the ideal SAX model (inject the exact measured residuals, `-8.86°`/`-45.64°`,
+into `stage2_up`'s correction and measure worst-channel extinction, N=2 vs. N=4
+via `build_ideal_mux4_tree_circuit`'s new `n_couplers` parameter):
+
+| N (couplers/stage) | phase error | ch1 ext (dB) | ch2 ext (dB) | worst (dB) |
+|---|---|---|---|---|
+| 2 | 0° | 44.1 | 35.1 | 35.1 |
+| 2 | -8.86° | 23.5 | 26.8 | 23.5 |
+| 2 | -45.64° | 9.6 | 10.0 | 9.6 |
+| 4 | 0° | 75.6 | 66.4 | 66.4 |
+| 4 | -8.86° | 44.3 | 50.4 | 44.3 |
+| 4 | -45.64° | 17.2 | 17.8 | 17.2 |
+
+At every error level, N=4 beats N=2 by 8–31dB of worst-channel extinction — a
+flat-top design's transmission derivative near its own crossover is much smaller
+than a plain sinusoidal MZI's, so the same absolute phase error costs it far less
+extinction. This motivated `circuits/mux4_tree_n4_real_fdtd_sax.ipynb`, a real-FDTD
+rebuild of all 3 tree stages as N=4 lattices, per the user's approval to add
+whatever new sweeps this required.
+
+**A second, geometrically distinct real delay arm was needed for the N=4 rebuild.**
+`models.mzi_arm` (4-Euler-bend jog, `03_mzi_arm.ipynb`) has a `delta_L_um` floor of
+`13.272µm` at its own default `radius_um=5.0` — well above `stage2_down`/
+`stage2_up`'s targets (`7.5`/`7.6401287µm`), geometrically unreachable there.
+`radius_um=2.5` lowers the floor to `6.632µm` (comfortable margin below both
+targets), while staying clear of the euler-vs-circular crossover (`~1.5–1.75µm`,
+`bend.py` section above) where Euler stops being the better choice. Two new points
+were simulated at this radius (`data/sparams/mzi_arm/sweep_r2.5/`,
+`extra_straight_um=0.434`/`0.5040643554079294` for `delta_L_um=7.5`/`7.6401287`
+respectively); `stage1` reuses the existing `radius_um=5.0`, `delta_L_um=15.0`
+baseline design point unchanged (no new simulation needed there).
+
+**This arm's phase-vs-length relationship is much closer to linear than `mzi.py`'s
+bump — confirmed BEFORE committing to new simulations, not assumed.** Unlike the
+bump (whose curvature itself changes shape with `delta_L_um`), `mzi_arm`'s 4 bends
+have FIXED curvature at a given `radius_um`; only a straight segment's length
+changes with `delta_L_um`. A self-consistency check across the existing
+`radius_um=5.0` sweep (6 points, `delta_L_um=14`–`30µm`) found the SAME implied
+slope correction (`+4.946°/µm`, i.e. `+0.77%` of the ideal `11.2097 rad/µm`) from
+BOTH its 2.5µm-spaced and 5µm-spaced point pairs — internally consistent in a way
+`mzi.py`'s own sweep never was, strong evidence this arm's phase-length relation
+genuinely is linear (to within a small, constant correction, plausibly just
+`n_eff0` itself being fit ~1% off at this exact cross-section). This is why the
+N=4 rebuild's `stage2_up` uses the ORIGINAL ideal quarter-wave target
+(`delta_L_um=7.6401287108158605`) directly, without the iterative recalibration
+`mzi.py`'s bump arm needed.
+
+**Confirmed: the near-linear arm needed no recalibration, and N=4 substantially
+recovered real extinction.** `circuits/mux4_tree_n4_real_fdtd_sax.ipynb` measured
+the new arm's real phase difference directly (same check as the N=2 notebook):
+**+89.06° vs. the +90° target, an -0.94° residual** — an order of magnitude
+tighter than the bump arm's best achieved result (-8.86°), confirming the
+linearity prediction above without needing a second iteration. Real per-channel
+extinction, N=2-per-stage vs. N=4-per-stage (both measured, not predicted):
+
+| channel | N=2 real ext (dB) | N=4 real ext (dB) |
+|---|---|---|
+| ch1 | 7.3 | 11.6 |
+| ch2 | 1.7 | 10.1 |
+| ch3 | 9.9 | 16.3 |
+| ch4 | 4.6 | 21.6 |
+
+Every channel improved; the worst channel (ch2) improved by ~8.4dB. Still well
+short of the ideal-model SAX prediction (~44dB at this same residual) — the real
+N=4 lattice cascades 4 real couplers + 3 real arms per stage (vs. N=2's single
+whole-MZI measurement or 2 couplers + 1 arm), so each stage now carries
+substantially more accumulated real loss (`stage2_up`'s own bar+cross sum at
+`wl0` measured `0.7448`, vs. `stage1`'s `0.9234` and `stage2_down`'s `0.9999` —
+consistent with the achieved coupler kappas, `[0.9544, 0.0459, 0.6922, 0.5072]`,
+deviating non-trivially from the ideal target `[0.9328, 0, 0.7503, 0.5006]` on
+top of each component's own measured loss) on top of whatever residual
+phase-calibration error remains. This is the expected, honest outcome — N=4 is a
+real, substantial improvement over N=2 at the SAME calibration accuracy, not a
+route to ideal-model performance.
+
+**Consolidated into one N=4-only notebook, `circuits/mux4_tree_n4_sax.ipynb`.**
+Per the user's decision to proceed with the N=4-per-stage design exclusively,
+this single notebook now combines the ideal SAX model, the real-FDTD model +
+ideal-vs-real comparison, and a full GDSfactory physical layout of the
+assembled 3-stage tree — the working design going forward. The two N=2
+notebooks and `mux4_tree_n4_real_fdtd_sax.ipynb` are kept unmodified as the
+historical record of the investigation that motivated N=4.
+
+**The GDS layout needed a genuinely new technique: branching, not series,
+placement.** Every prior GDS-export cell in this repo (`mzi_real_fdtd_sax.
+ipynb`'s `build_lattice_gds`, N=2 and N=4) only ever places coupler stages in
+series along one straight line. This tree's actual branch point — `stage1`'s
+two outputs feeding two separate, vertically-offset downstream lattice
+devices — has no precedent here, and `gf.routing` (gdsfactory's auto-routing
+API) was not used anywhere in this repo before this notebook.
+`gf.routing.route_single_sbend(component, port1, port2)` (gdsfactory 8.32.2)
+was the natural fit: a smooth S-bend between two arbitrary-offset,
+opposite-facing ports, exactly the branch connection needed, with no custom
+geometry math. Each per-stage lattice is placed via the existing
+`build_lattice_gds` pattern (generalized to take an explicit arm-geometry +
+reference-gap pair per stage, since `stage1`/`radius_um=5.0` and `stage2_up`,
+`stage2_down`/`radius_um=2.5` have different fixed spans); `stage2_up`/
+`stage2_down` are offset in y by half of `stage1`'s own measured `.bbox()`
+height plus half of the downstream stage's own height plus a margin, not a
+guessed constant.
+
+**`route_single_sbend`'s strict port-orientation check needed a small,
+justified snap.** It requires `port1`/`port2` orientations to differ by
+EXACTLY 180° (tolerance 0.1°) — measured ports here differed by ~180.15°,
+just over that tolerance. Root cause: `mzi_arm`'s own internal geometry chains
+8 `.connect()` calls (2 leads + 4 bends + 2 straight segments), and each
+accumulates a small KLayout fixed-point rounding error; by the time that
+component is placed and its outer ports read back, ~0.08–0.15° of drift has
+accumulated — physically meaningless (a sub-nanometer-scale effect at these
+port sizes) but enough to trip a strict equality-style check. Fixed by
+snapping each port's `orientation` to the nearest multiple of 90° immediately
+before calling `route_single_sbend`. One subtlety: `component.ports["name"]`
+returns a FRESH `Port` view on each access in this gdsfactory version —
+mutating a re-fetched port has no lasting effect, so the snapped port object
+must be captured once and reused for the actual routing call, not looked up
+again by name.
+
+## `optimization/arm_library.py` / `optimization/coupler_library.py` (length-axis interpolation for adjoint optimization)
+
+**Interpolating S-parameters over a geometric length axis needs the same
+magnitude+unwrapped-phase treatment as the wavelength axis (see this file's
+`models/mzi_arm.py` / `models/coupler.py` section above), plus an analytic
+propagation-trend removal step before unwrapping is even meaningful.**
+`arm_library.py`'s `delta_L_um` axis and `coupler_library.py`'s
+`coupling_length_um` axis both wind far too fast to unwrap directly across a
+sparse, irregularly-spaced grid (confirmed: ~640deg/um for the arm). Fix:
+subtract an analytic propagation trend (`k * 2*pi*n_eff*length_um/wl`, `k`
+chosen automatically per S-entry from a small candidate set by minimizing
+the worst residual step) before unwrapping across the length axis, and add
+it back at query time. This mirrors `models/mzi_arm.py`'s own wavelength-axis
+`_interp_complex` fix, just applied to a different axis.
+
+**Coupler through/cross phase needs `k=1`; reflection terms need `k=2`; the
+initial assumption that couplers needed no de-winding at all was wrong.**
+Because the coupler's cross-vs-through *relative* phase stays pinned within
+0.5° of +90° across the entire measured 2–26um sweep (a fixed property of
+the coupled-mode coupling mechanism, not something length tuning can move —
+see this file's "`circuits/` MUX2 (N=4 lattice) geometry-optimization
+program" section below), a first version of `coupler_library.py` assumed no
+length-axis winding needed correcting at all. Its own leave-one-out fit-quality check immediately
+caught ~180deg phase errors: each S-entry's own *absolute* phase (not the
+relative through/cross difference) still winds substantially with coupling
+length, for the same physical reason the arm's phase winds with `delta_L_um`
+— more coupling length is still more propagation length. The candidate-`k`
+search picks `k=1` for `S_through`/`S_cross` (one-way propagation) and `k=2`
+for `S_reflect` (round-trip), both using the same fitted-waveguide `n_eff`
+from `data/design_points/waveguide.yaml` as the trend estimate (accurate
+enough to de-wind by, despite the coupling region's own supermode index
+technically differing from an isolated waveguide's).
+
+**The `coupler_selected` 50:50 design-point artifact (13.848um) is excluded
+from the length-axis library.** Direct comparison against its 14.0um
+sweep-grid neighbor (only 0.15um away) showed a ~96° `S_through` phase
+offset at a fixed wavelength — implausibly large for two such similar
+lengths if both artifacts shared one consistent phase reference. Root cause
+is a different monitor/reference-plane placement between the two
+independent simulation runs (`06_directional_coupler.ipynb`'s Section-10
+sweep vs. its own separate Section-11 50:50 re-simulation), not a real
+physical discontinuity. The library uses only the uniform 7-point sweep
+(`data/sparams/coupler/sweep/`), all from one consistent run.
+
+**`S_through` has a genuine physical null (a true zero-crossing, not
+simulation noise) near `coupling_length_um=26`, `wl≈1.392–1.393um`.**
+`|S_through|` there drops to ~0.002 then recovers on either side —
+consistent with the coupled-mode `cos(kappa*Lc)` transmission term crossing
+zero at this length/wavelength combination. Phase is inherently ill-defined
+at a magnitude null regardless of interpolation method; `coupler_library.py`
+excludes wavelength bins where either endpoint of a length-step has
+magnitude below a small threshold from the de-winding *quality check* only
+(not from the interpolation table itself) — their negligible magnitude
+means their phase barely affects any reconstructed value, and the affected
+band sits well outside every channel wavelength this project's objective
+actually samples (nearest channel target is 1.384um, whose own ±5nm
+evaluation window ends at 1.389um).
+
+## `circuits/` MUX2 (N=4 lattice) geometry-optimization program (2026-09-07 to 2026-09-14, paused/abandoned)
+
+Eleven exploratory notebooks in `circuits/` (`wdm_stage1_adjoint_optimization.ipynb`,
+`wdm_stage2_adjoint_optimization.ipynb`, `wdm_stage2_with_optimized_stage1.ipynb`,
+`wdm_sax_optimization_v2.ipynb`, `wdm_sax_optimization_v2_fdtd_validation.ipynb`,
+`wdm_component_sparam_diagnostic.ipynb`, `wdm_mux2_coupler_dispersion_diagnosis.ipynb`,
+`wdm_mux2_optimization_dispersion_corrected.ipynb`, `wdm_mux2_optimization_2d_coupler.ipynb`,
+`wdm_mux2_optimization_2d_coupler_full_spectrum.ipynb`,
+`wdm_mux2_greedy_stepwise_redesign.ipynb`) tried to close the ideal-vs-real
+gap `wdm_sax.ipynb`'s N=4 lattice shows in FDTD, using the JAX-differentiable
+surrogate in `src/pic_toolkit/optimization/` (`circuit_diff.py`, `objective.py`,
+`arm_library.py`, `coupler_library.py`, `lbfgs.py`, `adam.py`/`adam_nd.py`).
+This work is paused with no optimized design adopted into production —
+`wdm_sax.ipynb`/`wdm_mux4_sax.ipynb` still ship the original
+`CHOSEN_LC=[26.0, 2.0, 18.0, 14.0]`, `gap_um=0.20` baseline. This entry
+consolidates what the eleven notebooks found before they were removed; the
+underlying measured data they produced (see "What's still on disk" below)
+was left in place.
+
+**Coupler stage 3's sign mismatch is a topological ceiling, not a tuning
+problem.** The maximally-flat N=4 synthesis needs `signs=[+1,+1,+1,-1]`, but
+every real directional coupler this platform has ever characterized (the
+full measured 2–26um length range) shows the same `+1`-like cross/through
+relative phase — `sin(kappa*L)`'s sign only flips well past the
+"overcoupled" turnover point, far outside any length in this project's
+libraries. No amount of arm- or coupler-length tuning, including letting
+each arm-pair's `delta_L` vary independently (an 8-parameter variant that
+was tried and made the objective *worse*, 1.609 vs. 0.656), reaches it. It
+would need either new FDTD data deep in the overcoupled regime or a
+non-mirror-symmetric coupler geometry — out of scope for a meep-free
+circuits notebook.
+
+**L-BFGS-B (quasi-Newton) clearly beats Adam for this problem class**: exact
+JAX gradients through a pure-interpolation surrogate, smooth and
+low-dimensional (6–8 scalars) — exactly quasi-Newton's regime. Head-to-head
+from the same start, L-BFGS-B reached a meaningfully better optimum
+(objective 0.656 vs. Adam's 1.524) in ~5x fewer iterations (45 steps vs.
+250+). Every later notebook in this program used L-BFGS-B with multi-start,
+not Adam.
+
+**The decisive, repeated bug: every early optimization round targeted
+channel-center wavelengths computed from the fully idealized (dispersion-
+free) analytic model — a target the real, dispersive device could never
+actually reach well.** A component-level complex-S-parameter diagnostic
+(`wdm_component_sparam_diagnostic.ipynb`) confirmed real couplers are
+genuinely, substantially dispersive (`ideal_coupler_model`'s flat-`kappa`
+assumption is quantitatively wrong, not just a simplification — e.g. at
+`Lc=18um`, `kappa(lambda)` swings ~28 percentage points across the band), on
+top of the already-known coupler-3 sign ceiling. A 5-case component-swap
+ablation (`wdm_mux2_coupler_dispersion_diagnosis.ipynb`,
+`wdm_mux2_greedy_stepwise_redesign.ipynb`) then traced this project's whole
+~21.5nm ideal-vs-real channel-wavelength offset almost entirely to coupler
+dispersion alone (+21.4nm of the +21.5nm total) — arm/bend dispersion
+matters in isolation (+8.3nm) but its marginal contribution once coupler
+dispersion is already present nearly vanishes, correcting `wdm_sax.ipynb`'s
+own original framing that blamed the two roughly equally. Fixing only the
+optimization *target* — freezing `lambda_1`/`lambda_2` from a reference
+circuit built with real, FDTD-measured coupler S-parameters plus a
+bend-dispersion-corrected arm model, with the forward surrogate and
+optimizer left unchanged — immediately produced a real, FDTD-validated
+improvement: channel-1 transmission 54.6%→89.9%, crosstalk 38.7%→5.2%
+(`wdm_mux2_optimization_dispersion_corrected.ipynb`).
+
+**The best point-sampled result of the whole program**: extending the free
+variables from coupler length only to a full 2D (gap × length) search
+against that same corrected target reached 97.1% transmission, 0.71%
+crosstalk, 0.13dB insertion loss, +0.4nm wavelength error
+(`wdm_mux2_optimization_2d_coupler.ipynb`), validated against an
+iteratively-densified 18-gap 2D interpolation library. An earlier attempt at
+this same experiment against only 6 characterized gaps looked comparably
+good in the surrogate (objective 0.137) but validated *worse* than the
+length-only baseline in real FDTD (79.9% transmission, 16.3% crosstalk) —
+traced to the sparse gap axis's own leave-one-out fit quality being too
+poor (22% magnitude / 109deg phase error) to trust the optimizer's chosen
+point. Lesson: densify and leave-one-out-validate an interpolation axis
+*before* trusting an optimizer that can freely explore it.
+
+**A stricter whole-spectrum shape-fidelity objective reintroduced the exact
+same target-anchoring bug and failed outright**
+(`wdm_mux2_optimization_2d_coupler_full_spectrum.ipynb`): its RMS-deviation
+target was again the plain idealized (dispersion-free) spectrum, so the
+optimizer faithfully found a design with a 46%-better whole-spectrum RMS
+score against that *wrong* target — while its actual usable channel peak
+landed 17.7nm off, transmission collapsed to 37.9%, and crosstalk rose to
+60.6%. An objective's target definition matters at least as much as its
+loss shape, and this project got bitten by the same mistake twice.
+
+**Greedy, one-component-at-a-time coupler/arm selection (picking each
+coupler's best real `(gap_um, Lc_um)` directly off the raw 2D-sweep data,
+then the arm, no joint gradient optimization at all) is fast and directly
+fixes wavelength alignment by construction** — best-in-program wavelength
+error (−0.2nm) — **but does not dominate the joint 2D optimum**: it
+underperforms on point transmission/crosstalk (89.3%/2.81% vs. 97.1%/0.71%)
+and its whole-spectrum shape fidelity is actually *worse* than the
+unoptimized production baseline, not better. Matching each coupler's own
+kappa and local dispersion flatness in isolation says nothing about the
+cascade's overall passband bandwidth (3.2nm vs. the joint optimum's
+19.5nm) — a whole-circuit interaction only a joint (not greedy/local)
+optimizer accounts for. Greedy and joint optimization solve different
+problems; neither dominates the other.
+
+**What's still on disk.** The differentiable surrogate/objective/optimizer
+modules remain at `src/pic_toolkit/optimization/` and the FDTD-validated
+artifacts each round produced remain cached under
+`data/sparams/mzi_arm/optimized/` and `data/sparams/coupler/optimized/`
+(`_v2` through `_v7`, plus `_up`/`_down`/`_with_couplers` variants for the
+MUX4-tree stage-2 thread) and `data/sparams/mzi_arm/optimization_history*.csv`
+— none of it is referenced by any notebook still in `circuits/` as of this
+entry. If this program is resumed, `wdm_mux2_optimization_2d_coupler.ipynb`'s
+2D (gap × length) joint result against the dispersion-corrected target is
+the strongest point-performance candidate on record, but the whole-spectrum
+and greedy experiments above show a real, unresolved point-performance-vs-
+bandwidth tradeoff that would need a properly-scoped objective before
+adopting anything into production.
