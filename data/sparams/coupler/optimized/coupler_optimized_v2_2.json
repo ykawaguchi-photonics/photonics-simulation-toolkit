@@ -1,0 +1,34 @@
+{
+  "coupling_length_um": 10.582520759685764,
+  "stage": "wdm_sax_optimization_v2",
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_in_top": 0.0,
+      "max_deviation_in_bot": 0.0,
+      "max_deviation": 0.0,
+      "max_expected_loss": 0.3,
+      "tolerance": 0.15,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_through": 2.009749031517405e-05,
+      "max_diff_cross": 8.651545606364053e-06,
+      "max_diff_reflect": 3.8312076858660477e-07,
+      "max_diff": 2.009749031517405e-05,
+      "tolerance": 0.15,
+      "passed": true
+    },
+    "passivity": {
+      "max_power_fraction": 0.7279907442031803,
+      "tolerance": 0.05,
+      "passed": true
+    },
+    "passed": true
+  },
+  "port_names": [
+    "in_top",
+    "in_bot",
+    "out_top",
+    "out_bot"
+  ]
+}

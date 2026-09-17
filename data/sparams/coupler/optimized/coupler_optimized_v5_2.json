@@ -1,0 +1,35 @@
+{
+  "coupling_length_um": 19.33250873826302,
+  "gap_um": 0.13499999380868297,
+  "stage": "wdm_mux2_optimization_2d_coupler",
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_in_top": 0.0,
+      "max_deviation_in_bot": 0.0,
+      "max_deviation": 0.0,
+      "max_expected_loss": 0.3,
+      "tolerance": 0.15,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_through": 5.926966438296599e-05,
+      "max_diff_cross": 3.583589329625436e-05,
+      "max_diff_reflect": 7.0726551127399916e-06,
+      "max_diff": 5.926966438296599e-05,
+      "tolerance": 0.15,
+      "passed": true
+    },
+    "passivity": {
+      "max_power_fraction": 0.9690615637998492,
+      "tolerance": 0.05,
+      "passed": true
+    },
+    "passed": true
+  },
+  "port_names": [
+    "in_top",
+    "in_bot",
+    "out_top",
+    "out_bot"
+  ]
+}

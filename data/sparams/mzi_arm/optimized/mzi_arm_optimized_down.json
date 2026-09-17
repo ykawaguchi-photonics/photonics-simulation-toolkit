@@ -1,0 +1,50 @@
+{
+  "component": "mzi_arm",
+  "delta_L_um": 7.547842789504419,
+  "geometry_params": {
+    "wg_width_um": 0.5,
+    "core_index": 2.7,
+    "clad_index": 1.44,
+    "polarization": "TE",
+    "wl_min_um": 1.3,
+    "wl_max_um": 1.4,
+    "resolution": 40,
+    "dpml_um": 1.0,
+    "radius_um": 2.5,
+    "bend_type": "euler",
+    "extra_straight_um": 0.45792139475220894,
+    "lead_len_um": 3.0,
+    "n_freq": 21,
+    "margin_um": 1.5,
+    "port_offset_um": 1.0,
+    "source_offset_um": 0.5
+  },
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_port1": 0.017979242013680397,
+      "max_deviation_port2": 0.02756396986390186,
+      "max_deviation": 0.02756396986390186,
+      "max_loss_fraction_allowed": 0.3,
+      "tolerance": 0.15,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_s12_s21": 0.00024306003289923896,
+      "max_diff_s11_s22": 0.02119805915245636,
+      "max_diff": 0.02119805915245636,
+      "tolerance": 0.15,
+      "passed": true
+    },
+    "passivity": {
+      "max_magnitude": 0.9836674746943255,
+      "tolerance": 0.05,
+      "passed": true
+    },
+    "passed": true
+  },
+  "meep_version": "1.34.0",
+  "port_names": [
+    "o1",
+    "o2"
+  ]
+}

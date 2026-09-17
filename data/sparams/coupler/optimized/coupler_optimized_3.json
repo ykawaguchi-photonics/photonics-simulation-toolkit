@@ -1,0 +1,34 @@
+{
+  "coupling_length_um": 14.007792608050845,
+  "stage": "stage1_with_couplers",
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_in_top": 0.0,
+      "max_deviation_in_bot": 0.0,
+      "max_deviation": 0.0,
+      "max_expected_loss": 0.3,
+      "tolerance": 0.15,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_through": 8.360211263502837e-05,
+      "max_diff_cross": 0.00021733669449891524,
+      "max_diff_reflect": 5.0646334733726525e-06,
+      "max_diff": 0.00021733669449891524,
+      "tolerance": 0.15,
+      "passed": true
+    },
+    "passivity": {
+      "max_power_fraction": 0.64315844347524,
+      "tolerance": 0.05,
+      "passed": true
+    },
+    "passed": true
+  },
+  "port_names": [
+    "in_top",
+    "in_bot",
+    "out_top",
+    "out_bot"
+  ]
+}
