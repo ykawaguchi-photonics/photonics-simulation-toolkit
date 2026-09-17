@@ -467,3 +467,43 @@ being a poor fit is itself often the whole explanation, and time-reversal
 symmetry (when no non-reciprocal materials are present) is a powerful,
 cheap-to-apply consistency check for exactly this class of "does reciprocal
 coupling actually work" question.
+
+## Porting a 2-port mode-coefficient convention to a 4-port device silently assumed a coordinate frame
+
+**Symptom:** while building `add_drop_ring.py` (notebook 10, a 4-port
+extension of `racetrack.py`'s 2-port ring), a coarse smoke-test run showed
+one of the two excitations (`add`) with a huge, obviously-wrong reflection
+coefficient and roughly 70% of input power unaccounted for by the energy
+check -- while the OTHER excitation (`input`) looked physically reasonable
+(a few-percent deviation, plausible for a deliberately under-converged
+smoke test). Reciprocity between the two excitations also failed by a wide
+margin (~0.87 vs. a normal few-percent).
+
+**Root cause:** `racetrack.py`'s two-port mode-coefficient rule ("at the
+excited port, keep index 1 [backward]; at the other port, keep index 0
+[forward]") was ported over unchanged, and it silently encodes an
+assumption specific to that module's own geometry: the excited port is
+always on the -x side of the domain. That's true for every 2-port device in
+this toolkit so far, but not for the add-drop ring's `add` port, which sits
+on the +x side. Applying the same rule there picked the WRONG traveling-wave
+component for both the self-reflection and one of the two cross-bus
+transfers.
+
+**Fix:** replaced the "self vs. other" rule with a "which edge of the
+domain is this monitor on" rule -- `input`/`drop` (both at the domain's -x
+edge) always keep the backward (index 1) component, `through`/`add` (both
+at the +x edge) always keep the forward (index 0) component, *regardless of
+which port was excited*. This is a more fundamental characterization (any
+signal reaching an edge monitor in steady state is, by construction of an
+absorbing PML, moving away from the device on that edge's own side) and
+happens to reduce to `racetrack.py`'s original rule exactly when the
+excited port is on the -x side.
+
+**Lesson:** a "self vs. other port" rule discovered from a 2-port device
+may actually be a "which side of the domain" rule in disguise, indistinguishable
+from the general case as long as every existing example happens to excite from
+one particular side. Before reusing a coefficient-index/sign convention from
+an existing module in a new topology, check whether the new device excites
+from a side the old rule never had to handle -- and verify with an
+independent cross-check (here, the two-excitation reciprocity check) rather
+than trusting that the ported rule "looks similar enough."

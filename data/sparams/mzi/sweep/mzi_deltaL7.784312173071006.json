@@ -1,0 +1,41 @@
+{
+  "component": "mzi",
+  "delta_L_um": 7.784312173071006,
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_port1": 0.04517699222824423,
+      "max_deviation_port2": 0.0,
+      "max_deviation": 0.04517699222824423,
+      "max_expected_loss": 0.12,
+      "tolerance": 0.05,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_input_leak": 0.038056501861697095,
+      "max_diff": 0.038056501861697095,
+      "tolerance": 0.08,
+      "passed": true
+    },
+    "passivity": {
+      "max_power_fraction": 0.947869616336569,
+      "tolerance": 0.03,
+      "passed": true
+    },
+    "passed": true
+  },
+  "fringe_metrics": {
+    "fsr_um": NaN,
+    "extinction_db": 29.886798470171637,
+    "peak_near_center_um": 1.3838745106874313,
+    "n_peaks": 1
+  },
+  "meep_version": "1.34.0",
+  "creation_date": "2026-09-05",
+  "note": "Second new point for the Mux4 tree circuit's stage2_up, superseding the first (delta_L=7.6401287, the ideal-linear-model quarter-wave estimate, which measured only +44.36deg of real S41 phase difference vs stage2_down's delta_L=7.5 -- half the intended +90deg). This point's delta_L = 7.5 + (pi/2)/5.5249um, calibrated from that first pair's OWN measured local phase-vs-length slope (5.5249 rad/um), not the ideal n_eff0-based linear formula -- see src/pic_toolkit/circuits/mux4_tree.py and docs/simulation_settings_record.md.",
+  "port_names": [
+    "in_top",
+    "in_bot",
+    "out_top",
+    "out_bot"
+  ]
+}

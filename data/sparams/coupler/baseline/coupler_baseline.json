@@ -16,7 +16,7 @@
     "clad_index": 1.44
   },
   "polarization": "TE (Hz out-of-plane, confirmed dominant -- see Section 6)",
-  "meep_resolution": 25,
+  "meep_resolution": 40,
   "simulation_params": {
     "wl_min_um": 1.3,
     "wl_max_um": 1.4,
@@ -27,7 +27,7 @@
   },
   "meep_version": "1.34.0",
   "python_version": "3.10.20",
-  "creation_date": "2026-09-03",
+  "creation_date": "2026-09-16",
   "validation": {
     "energy_conservation": {
       "max_deviation_in_top": 0.0,
@@ -38,15 +38,15 @@
       "passed": true
     },
     "reciprocity": {
-      "max_diff_through": 4.00562425448836e-05,
-      "max_diff_cross": 2.832534022345623e-05,
-      "max_diff_reflect": 1.60528825799474e-06,
-      "max_diff": 4.00562425448836e-05,
+      "max_diff_through": 1.9376288822647858e-05,
+      "max_diff_cross": 1.523540448888916e-05,
+      "max_diff_reflect": 3.318260132111257e-08,
+      "max_diff": 1.9376288822647858e-05,
       "tolerance": 0.03,
       "passed": true
     },
     "passivity": {
-      "max_power_fraction": 0.6410433583052209,
+      "max_power_fraction": 0.6409690989489929,
       "tolerance": 0.01,
       "passed": true
     },

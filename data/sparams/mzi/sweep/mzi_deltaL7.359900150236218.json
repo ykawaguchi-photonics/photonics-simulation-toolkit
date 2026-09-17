@@ -1,0 +1,65 @@
+{
+  "component": "mzi",
+  "geometry_params": {
+    "coupling_length_um": 13.848128928800111,
+    "gap_um": 0.2,
+    "wg_width_um": 0.5,
+    "wg_height_um": 0.22,
+    "sbend_len_um": 6.0,
+    "wide_sep_um": 2.0,
+    "lead_len_um": 2.0,
+    "n_seg": 24,
+    "mon_size_um": 1.2,
+    "bump_n_seg": 200,
+    "delay_region_len_um": 50.0,
+    "delta_L_um": 7.359900150236218
+  },
+  "material_params": {
+    "core_index": 2.7,
+    "clad_index": 1.44
+  },
+  "polarization": "TE (Hz out-of-plane, confirmed dominant -- see mzi.py docstring)",
+  "meep_resolution": 25,
+  "simulation_params": {
+    "wl_min_um": 1.3,
+    "wl_max_um": 1.4,
+    "n_freq": 101,
+    "dpml_um": 1.0,
+    "margin_um": 0.7,
+    "dft_decay_tol": 0.001,
+    "min_sim_time_factor": 2.0,
+    "max_sim_time_factor": 4.0
+  },
+  "meep_version": "1.34.0",
+  "python_version": "3.10.20",
+  "creation_date": "2026-09-15",
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_port1": 0.018657220616238424,
+      "max_deviation_port2": 0.022938288528808748,
+      "max_deviation": 0.022938288528808748,
+      "max_expected_loss": 0.08,
+      "tolerance": 0.08,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_input_leak": 0.02608777794535032,
+      "max_diff": 0.02608777794535032,
+      "tolerance": 0.05,
+      "passed": true
+    },
+    "passivity": {
+      "max_power_fraction": 0.9765881737222463,
+      "tolerance": 0.03,
+      "passed": true
+    },
+    "passed": true
+  },
+  "note": "circuits/wdm_mux4_sax.ipynb's N=2 stage2_up real-arm-calibrated delta_L_um -- NOT part of 07_mzi.ipynb's own 6-point DELTA_L_SWEEP_UM. Re-calibrated and re-simulated after mzi.py's own TE/TM eig_parity fix.",
+  "port_names": [
+    "in_top",
+    "in_bot",
+    "out_top",
+    "out_bot"
+  ]
+}

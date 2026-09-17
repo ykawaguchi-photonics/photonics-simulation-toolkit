@@ -1,0 +1,6 @@
+coupling_length_um,through_on_resonance_min,drop_on_resonance_max,artifact_path,validation_passed
+1.0,0.6358881030895813,0.04761025884133942,../data/sparams/add_drop_ring/sweep/add_drop_ring_couplinglength1.0,True
+2.0,0.46628392880178715,0.12600095826678376,../data/sparams/add_drop_ring/sweep/add_drop_ring_couplinglength2.0,False
+3.0,0.3738169893498725,0.18389025034901577,../data/sparams/add_drop_ring/sweep/add_drop_ring_couplinglength3.0,True
+4.0,0.2296290843954003,0.3375764995339975,../data/sparams/add_drop_ring/sweep/add_drop_ring_couplinglength4.0,True
+5.0,0.27396648754721487,0.2904450259694304,../data/sparams/add_drop_ring/sweep/add_drop_ring_couplinglength5.0,True

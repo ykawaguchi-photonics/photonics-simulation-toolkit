@@ -1,0 +1,64 @@
+{
+  "component": "add_drop_ring",
+  "swept_params": {
+    "coupling_length_um": 4.0
+  },
+  "geometry_params": {
+    "radius_um": 5.0,
+    "gap_um": 0.2,
+    "coupling_length_um": 4.0,
+    "wg_width_um": 0.5,
+    "wg_height_um": 0.22,
+    "wl_min_um": 1.3,
+    "wl_max_um": 1.4,
+    "dpml_um": 1.0,
+    "margin_um": 0.5
+  },
+  "meep_resolution": 25,
+  "meep_version": "1.34.0",
+  "creation_date": "2026-09-15",
+  "validation": {
+    "energy_conservation": {
+      "excite_input": {
+        "off_resonance_baseline": 0.9956220834469994,
+        "n_off_resonance_points": 1,
+        "n_resonance_points": 300,
+        "off_resonance_deviation": 0.0011966164858306927,
+        "max_physicality_excess": 0.0,
+        "passed": true
+      },
+      "excite_add": {
+        "off_resonance_baseline": 0.9948753152089852,
+        "n_off_resonance_points": 0,
+        "n_resonance_points": 301,
+        "off_resonance_deviation": 0.0,
+        "max_physicality_excess": 0.0,
+        "passed": true
+      },
+      "off_resonance_tol": 0.02,
+      "min_dip_depth": 0.1,
+      "passivity_tol": 0.01,
+      "passed": true
+    },
+    "reciprocity": {
+      "diff_input_through_vs_add_drop": 0.22684732546974612,
+      "diff_input_drop_vs_add_through": 0.08921366205035375,
+      "diff_input_refl_vs_add_refl": 0.07466466114352262,
+      "max_diff": 0.22684732546974612,
+      "tolerance": 0.35,
+      "passed": true
+    },
+    "passivity": {
+      "max_magnitude": 0.998945638774566,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "passed": true
+  },
+  "port_names": [
+    "input",
+    "through",
+    "add",
+    "drop"
+  ]
+}

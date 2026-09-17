@@ -76,6 +76,27 @@ def _interp_complex(wl, wl_grid, values):
     return re + 1j * im
 
 
+def _interp_complex_mag_phase(wl, wl_grid, values):
+    # Separate, magnitude+unwrapped-phase interpolator for mzi_at_sweep_point
+    # below -- NOT used by mzi() above, whose own _interp_complex (real/imag)
+    # is left unchanged. Measured directly across all 6 data/sparams/mzi/
+    # sweep/mzi_deltaL*.npz artifacts: S41's phase already winds up to ~63deg
+    # between adjacent wavelength grid points -- close to the ~114deg
+    # independently found (models/mzi_arm.py, models/coupler.py) to cause a
+    # ~40% spurious power deficit under real/imag interpolation (linearly
+    # interpolating real/imag parts across a step where phase winds by a
+    # large fraction of a full turn cuts the chord across the true circular
+    # arc, underestimating magnitude between grid points). No reason to
+    # assume mzi_at_sweep_point's own use case is safe when this hasn't been
+    # checked, so it uses the established-safer method from the start.
+    wl = np.asarray(wl, dtype=float)
+    order = np.argsort(wl_grid)
+    wl_sorted, values_sorted = wl_grid[order], values[order]
+    magnitude = np.interp(wl, wl_sorted, np.abs(values_sorted))
+    phase = np.interp(wl, wl_sorted, np.unwrap(np.angle(values_sorted)))
+    return magnitude * np.exp(1j * phase)
+
+
 def mzi(wl=1.35):
     """SAX model function: wavelength (um, scalar or array) -> SDict over the
     4 ports (in_top, in_bot, out_top, out_bot), with genuine complex
@@ -92,6 +113,56 @@ def mzi(wl=1.35):
 
     def _s(key):
         return _interp_complex(wl, wl_grid, artifact[key])
+
+    s11, s21, s31, s41 = _s("S11"), _s("S21"), _s("S31"), _s("S41")
+    s22, s12, s32, s42 = _s("S22"), _s("S12"), _s("S32"), _s("S42")
+
+    return {
+        (in_top, in_top): s11,
+        (in_top, in_bot): s21, (in_bot, in_top): s21,
+        (in_top, out_top): s31, (out_top, in_top): s31,
+        (in_top, out_bot): s41, (out_bot, in_top): s41,
+        (in_bot, in_bot): s22,
+        (in_bot, out_top): s32, (out_top, in_bot): s32,
+        (in_bot, out_bot): s42, (out_bot, in_bot): s42,
+    }
+
+
+def mzi_at_sweep_point(delta_L_um: float, wl=1.35) -> dict:
+    """SAX model function for an MZI at a delta_L_um OTHER than the single
+    selected design point -- reads directly from `notebooks/07_mzi.ipynb`'s
+    own Section 10 sweep artifacts (`data/sparams/mzi/sweep/
+    mzi_deltaL<X>.npz`), which that notebook's own sweep loop calls
+    `simulate_baseline()` for (same complex S_* fields as the selected point,
+    not a separate/lesser measurement). Generalizes this module the same way
+    `models.coupler.coupler_at_sweep_point` already does for the directional
+    coupler. No design point YAML exists for these (they were never
+    individually re-validated/selected the way mzi.yaml's own point was), so
+    this is for exploratory/comparison use (e.g. building a WDM circuit's
+    stages at several different delta_L_um from already-measured real data)
+    rather than a "trusted design" the way `mzi()` is.
+
+    Uses magnitude+unwrapped-phase interpolation (`_interp_complex_mag_phase`
+    above), NOT `mzi()`'s own real/imag one -- see that helper's docstring.
+
+    `delta_L_um` must match one of Section 10's swept values exactly (raises
+    FileNotFoundError with a clear message otherwise, listing what exists,
+    rather than silently interpolating between physically distinct
+    geometries)."""
+    stem = _REPO_ROOT / "data" / "sparams" / "mzi" / "sweep" / f"mzi_deltaL{delta_L_um}"
+    npz_path = stem.parent / (stem.name + ".npz")
+    if not npz_path.exists():
+        available = sorted(p.stem.replace("mzi_deltaL", "") for p in stem.parent.glob("mzi_deltaL*.npz"))
+        raise FileNotFoundError(
+            f"No sweep artifact at delta_L_um={delta_L_um} ({npz_path}). "
+            f"Available swept values: {available}"
+        )
+    artifact = _load_mzi_artifact(stem)
+    wl_grid = artifact["wavelengths_um"]
+    in_top, in_bot, out_top, out_bot = artifact["port_names"]
+
+    def _s(key):
+        return _interp_complex_mag_phase(wl, wl_grid, artifact[key])
 
     s11, s21, s31, s41 = _s("S11"), _s("S21"), _s("S31"), _s("S41")
     s22, s12, s32, s42 = _s("S22"), _s("S12"), _s("S32"), _s("S42")

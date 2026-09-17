@@ -61,7 +61,8 @@ above still ship their original baseline geometry
 geometry-optimization program" section for the full findings (the coupler-3
 sign ceiling, the target-anchoring bug fixed twice, the best point-sampled
 result reached: 97.1% transmission / 0.71% crosstalk) before those
-notebooks were removed. The differentiable surrogate they used remains at
-`src/pic_toolkit/optimization/`, and the FDTD artifacts they produced remain
-cached under `data/sparams/{mzi_arm,coupler}/optimized/` — neither is
-referenced by `wdm_sax.ipynb`/`wdm_mux4_sax.ipynb`.
+notebooks were removed. The differentiable surrogate they used lives at
+`src/pic_toolkit/optimization/` in the working tree but is intentionally not
+part of this public repo (paused, exploratory), and the FDTD artifacts they
+produced remain cached under `data/sparams/{mzi_arm,coupler}/optimized/` —
+neither is referenced by `wdm_sax.ipynb`/`wdm_mux4_sax.ipynb`.

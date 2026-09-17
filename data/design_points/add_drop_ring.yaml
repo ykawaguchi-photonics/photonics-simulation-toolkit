@@ -1,0 +1,76 @@
+component: add_drop_ring
+parameters:
+  radius_um: 5.0
+  gap_um: 0.2
+  coupling_length_um: 4.0
+  wg_width_um: 0.5
+  wg_height_um: 0.22
+  core_index: 2.7
+  clad_index: 1.44
+  ring_conductivity: 0.001
+  wl_min_um: 1.3
+  wl_max_um: 1.4
+  dpml_um: 1.0
+  margin_um: 0.5
+source_artifact: data/sparams/add_drop_ring/sweep/add_drop_ring_couplinglength4.0
+provenance:
+  method: coupling_length_sweep_max_extinction
+  date: '2026-09-15'
+  meep_version: 1.34.0
+validation:
+  energy_conservation:
+    excite_input:
+      off_resonance_baseline: 0.9956220834469994
+      n_off_resonance_points: 1
+      n_resonance_points: 300
+      off_resonance_deviation: 0.0011966164858306927
+      max_physicality_excess: 0.0
+      passed: true
+    excite_add:
+      off_resonance_baseline: 0.9948753152089852
+      n_off_resonance_points: 0
+      n_resonance_points: 301
+      off_resonance_deviation: 0.0
+      max_physicality_excess: 0.0
+      passed: true
+    off_resonance_tol: 0.02
+    min_dip_depth: 0.1
+    passivity_tol: 0.01
+    passed: true
+  reciprocity:
+    diff_input_through_vs_add_drop: 0.22684732546974612
+    diff_input_drop_vs_add_through: 0.08921366205035375
+    diff_input_refl_vs_add_refl: 0.07466466114352262
+    max_diff: 0.22684732546974612
+    tolerance: 0.35
+    passed: true
+  passivity:
+    max_magnitude: 0.998945638774566
+    tolerance: 0.01
+    passed: true
+  passed: true
+rationale: Selected coupling_length_um=4.0 (gap_um fixed at 0.2) from a 5-point search
+  ([1.0, 2.0, 3.0, 4.0, 5.0]) as the point maximizing through-port on-resonance extinction
+  (equivalently, maximizing drop-port on-resonance transfer) -- see Section 9's trend
+  plot. A gap search was tried first and abandoned -- see docs/simulation_settings_record.md.
+fitted_model:
+  radius_um: 5.0
+  coupling_length_um: 4.0
+  kappa1: 0.2736986219315915
+  kappa2: 0.22859288300856934
+  alpha: 0.002572296352254343
+  n_eff: 2.4381309050615627
+  fit_method: add-drop CMT extraction with kappa1 and kappa2 fit INDEPENDENTLY (not
+    constrained equal, despite the symmetric gap/coupling-length design), fit to a
+    SINGLE resonance (1.350-1.360um, n_freq=401 narrowband re-run) using all 4 measured
+    transfer functions jointly (input->through, add->drop, input->drop, add->through)
+    via scipy.optimize.curve_fit. Multi-started from a measured-drop-peak-derived
+    kappa seed perturbed toward both kappa1>kappa2 and kappa1<kappa2, crossed with
+    3 candidate mode numbers -- converged to the same kappa1>kappa2 answer regardless
+    of which direction the seed asymmetry favored. RMS residual is roughly half the
+    kappa1=kappa2-constrained fit's residual on the same narrowband data, confirming
+    a real, physically plausible difference between the two nominally-identical couplers
+    -- see docs/simulation_settings_record.md for the full record, including the mode-number
+    ambiguity (residual differences across neighboring candidate mode numbers were
+    <0.001%, so the seeded mode number was kept over a marginally-lower-residual alternative).
+  fit_residual_rms: 0.008117011188260482

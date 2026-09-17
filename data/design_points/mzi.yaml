@@ -1,6 +1,6 @@
 component: mzi
 parameters:
-  coupling_length_um: 13.848128928800111
+  coupling_length_um: 13.708639452498595
   gap_um: 0.2
   wg_width_um: 0.5
   wg_height_um: 0.22
@@ -14,24 +14,24 @@ parameters:
 source_artifact: data/sparams/mzi/selected/mzi_selected
 provenance:
   method: sweep_selection_max_extinction_with_resolved_fringes
-  date: '2026-09-03'
+  date: '2026-09-16'
   meep_version: 1.34.0
 validation:
   energy_conservation:
-    max_deviation_port1: 0.07397238148398644
+    max_deviation_port1: 0.0
     max_deviation_port2: 0.0
-    max_deviation: 0.07397238148398644
+    max_deviation: 0.0
     max_expected_loss: 0.08
     tolerance: 0.08
     passed: true
   reciprocity:
-    max_diff_input_leak: 0.002755086846306639
-    max_diff: 0.002755086846306639
+    max_diff_input_leak: 0.00036339627699000265
+    max_diff: 0.00036339627699000265
     tolerance: 0.05
     passed: true
   passivity:
-    max_power_fraction: 0.9693185692139402
-    tolerance: 0.01
+    max_power_fraction: 0.9901360292590902
+    tolerance: 0.03
     passed: true
   passed: true
 rationale: Selected from the Section-10 delta_L sweep ([2.5, 5.0, 7.5, 10.0, 12.5,

@@ -1,0 +1,9 @@
+extra_straight_um,wl_min_um,wl_max_um,n_freq,artifact_path,validation_passed
+1.3640000000000008,1.3,1.4,21,../data/sparams/mzi_arm/sweep_dense2um/mzi_arm_extra_straight1.3640000000000008,True
+2.3640000000000008,1.3,1.4,21,../data/sparams/mzi_arm/sweep_dense2um/mzi_arm_extra_straight2.3640000000000008,True
+4.364000000000001,1.3,1.4,21,../data/sparams/mzi_arm/sweep_dense2um/mzi_arm_extra_straight4.364000000000001,True
+5.364000000000001,1.3,1.4,21,../data/sparams/mzi_arm/sweep_dense2um/mzi_arm_extra_straight5.364000000000001,True
+6.364000000000001,1.3,1.4,21,../data/sparams/mzi_arm/sweep_dense2um/mzi_arm_extra_straight6.364000000000001,True
+7.364000000000001,1.3,1.4,21,../data/sparams/mzi_arm/sweep_dense2um/mzi_arm_extra_straight7.364000000000001,True
+9.364,1.3,1.4,21,../data/sparams/mzi_arm/sweep_dense2um/mzi_arm_extra_straight9.364,True
+10.364,1.3,1.4,21,../data/sparams/mzi_arm/sweep_dense2um/mzi_arm_extra_straight10.364,True

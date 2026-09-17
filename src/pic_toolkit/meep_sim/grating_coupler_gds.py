@@ -17,6 +17,7 @@ spiral()` directly rather than hand-rolling a component.
 
 from __future__ import annotations
 
+import functools
 from pathlib import Path
 
 
@@ -44,7 +45,15 @@ def build_gf_component(params: dict):
     """
     import gdsfactory as gf
 
-    cross_section = gf.cross_section.strip(width=params["wg_width_um"])
+    # A pre-built CrossSection *instance* here would silently ignore every
+    # width= override gdsfactory's own taper()/grating_coupler_rectangular()
+    # apply internally (gf.get_cross_section warns "... are ignored" and
+    # returns the instance unchanged) -- collapsing width1==width2 and
+    # degenerating the taper into a constant-width rectangle. A callable
+    # factory (partial) is re-invoked with each override instead, so
+    # wg_width_um still sets the input-lead width while width_grating_um
+    # still reaches the wide end of the taper.
+    cross_section = functools.partial(gf.cross_section.strip, width=params["wg_width_um"])
     component = gf.components.grating_coupler_rectangular(
         n_periods=params["n_periods"],
         period=params["period_um"],

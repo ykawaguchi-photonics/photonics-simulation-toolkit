@@ -131,9 +131,17 @@ DEFAULT_PARAMS = {
     "wl0_um": 1.35,                # single "design" wavelength the 50:50 interpolation is
                                   # solved at -- center of wl_min_um-wl_max_um, matching
                                   # models/racetrack.py's own default readout wavelength.
-    "resolution": 25,              # pixels/um -- matches racetrack.py, already confirmed (at
-                                  # this exact gap_um=0.2) to give 5 grid points across the gap
-                                  # and sub-1% sensitivity to resolution.
+    "resolution": 40,              # pixels/um. Was 25 (matching racetrack.py's choice,
+                                  # "already confirmed... sub-1% sensitivity to resolution")
+                                  # until re-checked after the TE/TM eig_parity fix: a direct
+                                  # resolution=25 vs. 40 comparison on mzi.py's baseline (which
+                                  # reuses this module's own coupling_length_um/geometry) showed
+                                  # a dramatic, not sub-1%, difference under genuine TE physics
+                                  # (energy-conservation deviation 3.79%->0.0%, reciprocity 17x
+                                  # tighter, a real passivity violation disappearing entirely) --
+                                  # see docs/simulation_settings_record.md. The old "sub-1%"
+                                  # confirmation was made under the pre-fix (effectively TM)
+                                  # physics and does not hold under TE.
     "dpml_um": 1.0,
     "margin_um": 0.7,             # clearance from the wide-separation waveguides/monitors to
                                   # the PML -- larger than racetrack.py's 0.5 because this

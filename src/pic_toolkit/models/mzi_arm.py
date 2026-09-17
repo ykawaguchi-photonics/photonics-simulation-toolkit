@@ -87,3 +87,59 @@ def mzi_arm(wl=1.35):
         (o2, o1): _interp_complex(wl, wl_grid, artifact.s_matrix["21"]),
         (o2, o2): _interp_complex(wl, wl_grid, artifact.s_matrix["22"]),
     }
+
+
+# radius_um -> the sweep subdirectory holding that radius's own extra_straight_um-tagged
+# artifacts. `03_mzi_arm.ipynb` Section 10's own sweep only ever varied extra_straight_um at
+# a single fixed radius_um=5.0 (data/sparams/mzi_arm/sweep/) -- its floor delta_L (13.272um)
+# cannot reach the Mux4 tree's own stage2 targets (7.5/7.64um), so a second radius (2.5um,
+# floor 6.632um) was swept separately into its own directory to avoid any filename ambiguity
+# with the existing radius=5.0 points (grid_sweep's own tag encodes only the SWEPT param,
+# extra_straight_um, not radius_um).
+_SWEEP_DIRS_BY_RADIUS = {
+    5.0: _REPO_ROOT / "data" / "sparams" / "mzi_arm" / "sweep",
+    2.5: _REPO_ROOT / "data" / "sparams" / "mzi_arm" / "sweep_r2.5",
+}
+
+
+def mzi_arm_at_sweep_point(extra_straight_um: float, radius_um: float = 5.0, wl=1.35) -> dict:
+    """SAX model function for an mzi_arm at a specific (radius_um, extra_straight_um)
+    OTHER than the single selected design point (radius_um=5.0, extra_straight_um=0.864,
+    delta_L_um=15.0) -- generalizes this module the same way `models.mzi.
+    mzi_at_sweep_point`/`models.coupler.coupler_at_sweep_point` already do for their own
+    components. Reads directly from the relevant sweep directory's own
+    `mzi_arm_extra_straight<X>.npz` artifact (`03_mzi_arm.ipynb` Section 10, or the
+    Mux4-tree-specific radius_um=2.5 sweep -- see `_SWEEP_DIRS_BY_RADIUS` above). No
+    interpolation across extra_straight_um/radius_um (a discrete geometry choice, not a
+    runtime-adjustable parameter) -- raises FileNotFoundError listing available values on
+    a miss, exactly like `mzi_at_sweep_point`.
+
+    Uses the same magnitude+unwrapped-phase wavelength interpolation as `mzi_arm()` above
+    (`_interp_complex`) -- this component's own long physical path already established
+    that convention (see that function's docstring)."""
+    if radius_um not in _SWEEP_DIRS_BY_RADIUS:
+        raise ValueError(
+            f"No sweep data for radius_um={radius_um}. Available radii: "
+            f"{sorted(_SWEEP_DIRS_BY_RADIUS)}"
+        )
+    sweep_dir = _SWEEP_DIRS_BY_RADIUS[radius_um]
+    stem = sweep_dir / f"mzi_arm_extra_straight{extra_straight_um}"
+    npz_path = stem.parent / (stem.name + ".npz")
+    if not npz_path.exists():
+        available = sorted(
+            p.stem.replace("mzi_arm_extra_straight", "") for p in sweep_dir.glob("mzi_arm_extra_straight*.npz")
+        )
+        raise FileNotFoundError(
+            f"No sweep artifact at radius_um={radius_um}, extra_straight_um={extra_straight_um} "
+            f"({npz_path}). Available extra_straight_um values at this radius: {available}"
+        )
+    artifact = sparams.load_artifact(stem)
+    wl_grid = artifact.wavelengths_um
+    o1, o2 = artifact.port_names
+
+    return {
+        (o1, o1): _interp_complex(wl, wl_grid, artifact.s_matrix["11"]),
+        (o1, o2): _interp_complex(wl, wl_grid, artifact.s_matrix["12"]),
+        (o2, o1): _interp_complex(wl, wl_grid, artifact.s_matrix["21"]),
+        (o2, o2): _interp_complex(wl, wl_grid, artifact.s_matrix["22"]),
+    }

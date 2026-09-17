@@ -11,22 +11,22 @@
       "passed": true
     },
     "reciprocity": {
-      "max_diff_through": 0.00018853448318034705,
-      "max_diff_cross": 5.2542133299672555e-05,
-      "max_diff_reflect": 1.0298055092703134e-05,
-      "max_diff": 0.00018853448318034705,
+      "max_diff_through": 2.2367859375038712e-05,
+      "max_diff_cross": 2.0516063597014744e-06,
+      "max_diff_reflect": 4.108550013311868e-08,
+      "max_diff": 2.2367859375038712e-05,
       "tolerance": 0.05,
       "passed": true
     },
     "passivity": {
-      "max_power_fraction": 0.9584053793863921,
+      "max_power_fraction": 0.9644776416948321,
       "tolerance": 0.03,
       "passed": true
     },
     "passed": true
   },
   "meep_version": "1.34.0",
-  "creation_date": "2026-09-03",
+  "creation_date": "2026-09-16",
   "port_names": [
     "in_top",
     "in_bot",

@@ -1,7 +1,7 @@
 delta_L_um,artifact_path,validation_passed,fsr_um,extinction_db,peak_near_center_um,n_peaks
-2.5,../data/sparams/mzi/sweep/mzi_deltaL2.5,True,nan,27.499100182960476,nan,0
-5.0,../data/sparams/mzi/sweep/mzi_deltaL5.0,True,nan,31.454274826422907,1.3807249227311043,1
-7.5,../data/sparams/mzi/sweep/mzi_deltaL7.5,True,nan,30.330978238000753,1.3380895327306395,1
-10.0,../data/sparams/mzi/sweep/mzi_deltaL10.0,True,0.06778596321776931,27.385259270786385,1.323493764981551,2
-12.5,../data/sparams/mzi/sweep/mzi_deltaL12.5,True,0.05125073429700988,33.97151717082382,1.3651896096680094,2
-15.0,../data/sparams/mzi/sweep/mzi_deltaL15.0,True,0.04303897804587642,33.16112623313965,1.3489993686002142,3
+2.5,../data/sparams/mzi/sweep/mzi_deltaL2.5,True,nan,36.553230545343716,nan,0
+5.0,../data/sparams/mzi/sweep/mzi_deltaL5.0,True,nan,39.08440208904432,1.3312383171240485,1
+7.5,../data/sparams/mzi/sweep/mzi_deltaL7.5,True,nan,35.51013210571981,1.3755073477956612,1
+10.0,../data/sparams/mzi/sweep/mzi_deltaL10.0,True,nan,41.44490224402432,1.3331886377818174,1
+12.5,../data/sparams/mzi/sweep/mzi_deltaL12.5,True,0.051175373945328895,36.94127788677422,1.3641663427905169,2
+15.0,../data/sparams/mzi/sweep/mzi_deltaL15.0,True,0.04177564935500966,32.19642789206765,1.3410474033239637,2

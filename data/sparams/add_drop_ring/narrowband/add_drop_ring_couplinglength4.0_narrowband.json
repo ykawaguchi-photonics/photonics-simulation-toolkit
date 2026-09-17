@@ -1,0 +1,62 @@
+{
+  "component": "add_drop_ring",
+  "geometry_params": {
+    "radius_um": 5.0,
+    "gap_um": 0.2,
+    "coupling_length_um": 4.0,
+    "wg_width_um": 0.5,
+    "wg_height_um": 0.22,
+    "wl_min_um": 1.35,
+    "wl_max_um": 1.36,
+    "dpml_um": 1.0,
+    "margin_um": 0.5
+  },
+  "meep_resolution": 25,
+  "meep_version": "1.34.0",
+  "creation_date": "2026-09-15",
+  "validation": {
+    "energy_conservation": {
+      "excite_input": {
+        "off_resonance_baseline": 0.9908574491865654,
+        "n_off_resonance_points": 55,
+        "n_resonance_points": 346,
+        "off_resonance_deviation": 0.0029806136872185807,
+        "max_physicality_excess": 0.0,
+        "passed": true
+      },
+      "excite_add": {
+        "off_resonance_baseline": 0.9890713371008516,
+        "n_off_resonance_points": 67,
+        "n_resonance_points": 334,
+        "off_resonance_deviation": 0.003617541797620527,
+        "max_physicality_excess": 0.0,
+        "passed": true
+      },
+      "off_resonance_tol": 0.02,
+      "min_dip_depth": 0.1,
+      "passivity_tol": 0.01,
+      "passed": true
+    },
+    "reciprocity": {
+      "diff_input_through_vs_add_drop": 0.2052221751030533,
+      "diff_input_drop_vs_add_through": 0.0875477404290752,
+      "diff_input_refl_vs_add_refl": 0.010532560944926612,
+      "max_diff": 0.2052221751030533,
+      "tolerance": 0.35,
+      "passed": true
+    },
+    "passivity": {
+      "max_magnitude": 0.9979914968045979,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "passed": true
+  },
+  "note": "narrowband, high-density single-resonance run for CMT fitting (Section 12)",
+  "port_names": [
+    "input",
+    "through",
+    "add",
+    "drop"
+  ]
+}

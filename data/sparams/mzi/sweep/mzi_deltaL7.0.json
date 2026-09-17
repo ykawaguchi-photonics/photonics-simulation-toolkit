@@ -1,0 +1,55 @@
+{
+  "component": "mzi",
+  "geometry_params": {
+    "coupling_length_um": 13.848128928800111,
+    "gap_um": 0.2,
+    "wg_width_um": 0.5,
+    "wg_height_um": 0.22,
+    "sbend_len_um": 6.0,
+    "wide_sep_um": 2.0,
+    "lead_len_um": 2.0,
+    "n_seg": 24,
+    "mon_size_um": 1.2,
+    "bump_n_seg": 200,
+    "delay_region_len_um": 50.0,
+    "delta_L_um": 7.0
+  },
+  "material_params": {
+    "core_index": 2.7,
+    "clad_index": 1.44
+  },
+  "polarization": "TE (Hz out-of-plane, confirmed dominant)",
+  "meep_resolution": 25,
+  "meep_version": "1.34.0",
+  "python_version": "3.10.20",
+  "creation_date": "2026-09-15",
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_port1": 0.018669215879747236,
+      "max_deviation_port2": 0.015815734516740676,
+      "max_deviation": 0.018669215879747236,
+      "max_expected_loss": 0.08,
+      "tolerance": 0.08,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_input_leak": 0.012925147424077217,
+      "max_diff": 0.012925147424077217,
+      "tolerance": 0.05,
+      "passed": true
+    },
+    "passivity": {
+      "max_power_fraction": 1.0048727476113526,
+      "tolerance": 0.03,
+      "passed": true
+    },
+    "passed": true
+  },
+  "note": "Empirical scan point for circuits/wdm_mux4_sax.ipynb's stage2 recalibration after mzi.py's TE/TM fix -- delta_L_um=7.5 (the old stage2_down reference) sits at a near-total cross-port null under corrected physics, so this maps the real S41(delta_L_um) behavior directly rather than extrapolating from an unreliable local slope.",
+  "port_names": [
+    "in_top",
+    "in_bot",
+    "out_top",
+    "out_bot"
+  ]
+}

@@ -42,6 +42,21 @@ to reuse as-is (see notebooks/07_mzi.ipynb).
 
 Only this file (plus `waveguide.py`, `bend.py`, `bend_topopt.py`, `the since-removed ring.py`,
 `racetrack.py`, `coupler.py`) imports meep.
+
+**TE/TM correction:** this module had the same bug `coupler.py`'s own docstring
+documents fixing -- `eig_parity=` at the source and all 4 mode monitors was
+`mp.NO_PARITY`, and DFT capture recorded only `Ez`, on the unverified premise that
+`Ez` is this device's dominant field. It is not, for the same reason as `coupler.py`:
+`eig_parity=mp.NO_PARITY` silently selects the TM mode here too. `eig_parity` is now
+forced to `mp.TE` at the source and all four mode monitors (`_make_simulation`,
+`_run_one_excitation`), and the DFT field capture records whichever of `Ez`/`Hz` is
+actually dominant rather than assuming `Ez`. Unlike `coupler.py`, this module's own
+`coupling_length_um` default was already re-synced to match `coupler.py`'s
+already-TE-corrected value (13.848 um) -- see
+`docs/simulation_settings_record.md`'s `coupler.py`/`mzi.py` section -- so this fix
+does not change that constant; it corrects the polarization this module launches and
+measures with independently of it, which changes the DFT field snapshot's reported
+dominant component and this module's own measured energy/reciprocity residuals.
 """
 
 from __future__ import annotations
@@ -88,11 +103,10 @@ DEFAULT_PARAMS = {
     # --- splitter/combiner stage: reused verbatim from coupler.py's own
     # DEFAULT_PARAMS / data/design_points/coupler.yaml (the validated 50:50
     # point from notebooks/06_directional_coupler.ipynb) -- both MZI stages
-    # use this exact design, unmodified. Re-synced after 05's widened sweep
-    # (see docs/troubleshooting_log.md); 07_mzi.ipynb has not been re-run
-    # against this update, so its own cached outputs still reflect the prior
-    # value (13.873040884936595) until a future re-run.
-    "coupling_length_um": 13.848128928800111,
+    # use this exact design, unmodified. Re-synced after coupler.py's own
+    # resolution=25->40 re-measurement (see docs/simulation_settings_record.md);
+    # 07_mzi.ipynb needs a re-run against this update.
+    "coupling_length_um": 13.708639452498595,
     "gap_um": 0.2,
     "wg_width_um": 0.5,
     "wg_height_um": 0.22,
@@ -114,7 +128,16 @@ DEFAULT_PARAMS = {
     "wl_min_um": 1.3,
     "wl_max_um": 1.4,
     "n_freq": 101,
-    "resolution": 25,
+    "resolution": 40,              # was 25 -- a direct resolution=25 vs. 40 comparison at this
+                                  # module's own baseline delta_L_um (after the TE/TM eig_parity
+                                  # fix) showed a dramatic difference, not a minor refinement:
+                                  # energy-conservation deviation 3.79%->0.0%, reciprocity ~17x
+                                  # tighter (1.92%->0.11%), and a real passivity violation
+                                  # (1.0231, needed a loosened 0.03 tolerance) disappearing
+                                  # entirely (0.991, comfortably under 1) -- see
+                                  # docs/simulation_settings_record.md for the full comparison.
+                                  # resolution=25 is not adequate for this device's delay-arm
+                                  # bump geometry.
     "dpml_um": 1.0,
 
     # --- arm section: new to this module. Both arms extend directly from the
@@ -601,7 +624,7 @@ def _make_simulation(params: dict, launch_from: str, capture_dft: bool):
         src=mp.GaussianSource(frequency=fcen, fwidth=source_fwidth),
         center=mp.Vector3(src_port.x - 0.5, src_port.y),
         size=mp.Vector3(0, dom["mon_size"], 0),
-        eig_band=1, eig_parity=mp.NO_PARITY, eig_match_freq=True,
+        eig_band=1, eig_parity=mp.TE, eig_match_freq=True,
         eig_kpoint=mp.Vector3(1, 0, 0),
     )
     sim = mp.Simulation(
@@ -628,7 +651,7 @@ def _make_simulation(params: dict, launch_from: str, capture_dft: bool):
 
     dft_obj = None
     if capture_dft:
-        dft_obj = sim.add_dft_fields([mp.Ez], fcen, fcen, 1, center=geom_center, size=cell)
+        dft_obj = sim.add_dft_fields([mp.Ez, mp.Hz], fcen, fcen, 1, center=geom_center, size=cell)
     return sim, mon_self, mon_in_other, mon_out_top, mon_out_bot, dft_obj, dom
 
 
@@ -667,13 +690,14 @@ def _run_one_excitation(params: dict, launch_from: str, capture_dft: bool):
         sim.run(until_after_sources=mp.stop_when_dft_decayed(
             tol=params["dft_decay_tol"], minimum_run_time=min_sim_time, maximum_run_time=max_sim_time,
         ))
-        res_self = sim.get_eigenmode_coefficients(mon_self, [1], eig_parity=mp.NO_PARITY)
-        res_other = sim.get_eigenmode_coefficients(mon_in_other, [1], eig_parity=mp.NO_PARITY)
-        res_top = sim.get_eigenmode_coefficients(mon_out_top, [1], eig_parity=mp.NO_PARITY)
-        res_bot = sim.get_eigenmode_coefficients(mon_out_bot, [1], eig_parity=mp.NO_PARITY)
+        res_self = sim.get_eigenmode_coefficients(mon_self, [1], eig_parity=mp.TE)
+        res_other = sim.get_eigenmode_coefficients(mon_in_other, [1], eig_parity=mp.TE)
+        res_top = sim.get_eigenmode_coefficients(mon_out_top, [1], eig_parity=mp.TE)
+        res_bot = sim.get_eigenmode_coefficients(mon_out_bot, [1], eig_parity=mp.TE)
         freqs = np.array(mp.get_flux_freqs(mon_self))
         if capture_dft:
             ez = sim.get_dft_array(dft_obj, mp.Ez, 0)
+            hz = sim.get_dft_array(dft_obj, mp.Hz, 0)
             eps = sim.get_array(component=mp.Dielectric)
 
     a_self, a_other, a_top, a_bot = (res_self.alpha[0, :, :], res_other.alpha[0, :, :],
@@ -690,7 +714,11 @@ def _run_one_excitation(params: dict, launch_from: str, capture_dft: bool):
     if capture_dft:
         extent = (-dom["cell_x"] / 2, dom["cell_x"] / 2,
                   dom["y_center"] - dom["cell_y"] / 2, dom["y_center"] + dom["cell_y"] / 2)
-        field_snapshot = FieldSnapshot(field=ez, eps=eps, extent_um=extent, component="Ez")
+        if np.max(np.abs(ez)) >= np.max(np.abs(hz)):
+            field, component = ez, "Ez"
+        else:
+            field, component = hz, "Hz"
+        field_snapshot = FieldSnapshot(field=field, eps=eps, extent_um=extent, component=component)
     return freqs, incident, a_self[:, 1], cross_input, a_top[:, 0], a_bot[:, 0], field_snapshot
 
 

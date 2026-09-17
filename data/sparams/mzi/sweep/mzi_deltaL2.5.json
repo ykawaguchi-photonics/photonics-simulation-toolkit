@@ -3,21 +3,21 @@
   "delta_L_um": 2.5,
   "validation": {
     "energy_conservation": {
-      "max_deviation_port1": 0.017621205879159496,
+      "max_deviation_port1": 0.0,
       "max_deviation_port2": 0.0,
-      "max_deviation": 0.017621205879159496,
+      "max_deviation": 0.0,
       "max_expected_loss": 0.12,
       "tolerance": 0.05,
       "passed": true
     },
     "reciprocity": {
-      "max_diff_input_leak": 0.02724412139053261,
-      "max_diff": 0.02724412139053261,
+      "max_diff_input_leak": 0.0002607474988091441,
+      "max_diff": 0.0002607474988091441,
       "tolerance": 0.08,
       "passed": true
     },
     "passivity": {
-      "max_power_fraction": 0.976344340972945,
+      "max_power_fraction": 0.9934528983728564,
       "tolerance": 0.03,
       "passed": true
     },
@@ -25,12 +25,12 @@
   },
   "fringe_metrics": {
     "fsr_um": NaN,
-    "extinction_db": 27.499100182960476,
+    "extinction_db": 36.553230545343716,
     "peak_near_center_um": NaN,
     "n_peaks": 0
   },
   "meep_version": "1.34.0",
-  "creation_date": "2026-09-02",
+  "creation_date": "2026-09-16",
   "port_names": [
     "in_top",
     "in_bot",

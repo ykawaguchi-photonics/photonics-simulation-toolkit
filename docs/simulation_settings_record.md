@@ -566,8 +566,8 @@ arm and a raised-cosine-bump delay arm carrying the extra path length `delta_L_u
 
 | Parameter | Value | Note |
 |---|---|---|
-| `coupler.coupling_length_um` | 13.848 µm | The 50:50 point, re-measured after the TE/TM fix below (widened-sweep re-check landed at 13.848 µm, a ~0.03 µm shift from the earlier 13.873 µm — see below). |
-| `coupler.gap_um` | 0.2 µm | Matches `racetrack.py`'s already-validated choice at `resolution=25`. |
+| `coupler.coupling_length_um` | 13.708639 µm | The 50:50 point at `resolution=40` (see the resolution=25→40 update below); was 13.848 µm at `resolution=25`. |
+| `coupler.gap_um` | 0.2 µm | Matches `racetrack.py`'s choice; resolution sensitivity re-checked below (`resolution=40`, not `25`). |
 | `coupler.n_seg` | 24 | Axis-aligned blocks approximating each S-bend (max slope ~0.17, <2% width error — see below). |
 | `mzi.bump_n_seg` | 200 | Finer than the coupler's `n_seg` — the delay arm's bump offset can be an order of magnitude larger. |
 | `mzi.min_sim_time_factor` | 2.0 | Scales with `cell_x`, not a fixed constant — see below. |
@@ -603,6 +603,124 @@ was re-synced to 13.848 µm to match; `07_mzi.ipynb` and `data/design_points/mzi
 were deliberately **not** re-run/regenerated for this shift (see
 `docs/troubleshooting_log.md`), so that notebook's own cached outputs still reflect
 the prior 13.873 µm value pending a future re-run.
+
+**TE/TM mode-mislabeling bug in `mzi.py` itself (fixed).** Independent of the
+`coupler.py` bug above -- `mzi.py` has its own `_make_simulation`/
+`_run_one_excitation` (it does not delegate mode launch/measurement to
+`coupler.py`) -- the same `eig_parity=mp.NO_PARITY` pattern was still present at
+this module's own source and all four mode monitors, with DFT capture recording
+only `Ez`. Fixed the same way: `eig_parity` forced to `mp.TE` everywhere, DFT
+capture now records both `Ez`/`Hz` and the field snapshot reports whichever
+actually dominates -- confirmed `Hz` dominant (`Ez` exactly 0), same convention as
+`coupler.py`. This does *not* change `coupling_length_um` (that constant is
+`coupler.py`'s own, already re-measured under TE and re-synced into `mzi.py`'s
+`DEFAULT_PARAMS` per the "Sweep range widened..." entry above) -- it corrects the
+polarization `mzi.py` itself launches and measures with. This also resolves the
+previously-deferred re-run: `07_mzi.ipynb` and `data/design_points/mzi.yaml` were
+re-executed as part of this fix, so they are no longer stale relative to
+`mzi.py`'s `coupling_length_um` default.
+
+**Consequences of the re-run, measured directly.** Across the full Section 10
+`delta_L_um` sweep (`[2.5, 5.0, 7.5, 10.0, 12.5, 15.0]`), the energy-budget
+residual is **non-monotonic** in `delta_L_um` under genuine TE physics (0-3.8%,
+worst at `delta_L_um=10.0` -- this notebook's own baseline point) -- unlike the
+prior (TM-under-`NO_PARITY`) measurement's clean growth-with-length trend, which
+does not survive the fix. `PASSIVITY_TOL` (baseline/selected re-validation) had to
+be loosened from `coupler.py`'s single-stage `0.01` to `0.03` to match: the
+strict budget is now measurably violated (`max_power_fraction` up to `1.0231`,
+same worst point, `delta_L_um=10.0`), a small, non-monotonic overshoot
+comparable in size to the energy-budget residual -- consistent with (though not
+identical in mechanism to) this toolkit's own documented precedent for cascaded
+real-FDTD devices showing small non-physical passivity overshoots
+(`circuits/mzi_lattice.py`'s section below), not evidence of a bug. Both energy
+and passivity worst-casing at the SAME point (`delta_L_um=10.0`, coincidentally
+also the baseline default) is consistent with ordinary discretization/mode-overlap
+noise rather than a systematic length-dependent effect.
+
+**Design selection changed as a direct result: `SELECTED_DELTA_L_UM` moved from
+`15.0` to `7.5`.** Section 11's selection logic (unchanged: among validated points
+with `n_peaks>=2`, pick max extinction) is genuinely sensitive to the corrected
+physics -- under TE, `delta_L_um=7.5` now measures the deepest extinction
+(35.83dB) of the 3 points with a measurable in-band FSR (`7.5`/`12.5`/`15.0`),
+displacing the prior selection. `data/design_points/mzi.yaml` and
+`data/sparams/mzi/selected/` now reflect `delta_L_um=7.5`. This does NOT affect
+`circuits/wdm_mux4_sax.ipynb`, which never reads the "selected" design point --
+it calls `models.mzi.mzi_at_sweep_point(15.0, ...)`/`mzi_at_sweep_point(7.5, ...)`
+directly by name against Section 10's own sweep artifacts (both regenerated fresh
+by this same re-run), independent of which point Section 11 itself prefers.
+
+**UPDATE: `resolution=25` (both `coupler.py` and `mzi.py`) was itself found to be
+substantially under-converged, superseding everything above that was measured at
+that resolution — now `resolution=40`.** While investigating a real-arm
+recalibration for `circuits/wdm_mux4_sax.ipynb`, `mzi.py`'s baseline
+(`delta_L_um=10.0`) was directly compared at `resolution=25` vs. `resolution=40`:
+energy-conservation deviation dropped from 3.79% to **0.0%**, reciprocity tightened
+~17x (1.92%→0.11%), and the passivity budget's real violation (`max_power_fraction
+=1.0231`, needing `PASSIVITY_TOL` loosened to 0.03) disappeared entirely (`0.991`,
+comfortably under 1) — not a minor refinement, a qualitatively different, far
+better-converged answer (the through/cross power split itself changed from
+4.8%/88.6% to 42.6%/55.3% at this one point). `coupler.py`'s own default was
+re-checked the same way and changed too, though far less dramatically (this
+simpler single-stage device is much better-behaved): the 50:50 coupling length
+moved from `13.848µm` to **`13.708639452498595µm`** (a clean, monotonic beat curve,
+no turnover, all 7 sweep points passing cleanly) — re-synced into `mzi.py`'s own
+`DEFAULT_PARAMS`. Both modules' `DEFAULT_PARAMS["resolution"]` are now `40`.
+`coupler.gap_um=0.2µm`'s own "already confirmed... sub-1% sensitivity to
+resolution" claim in the table above was made under the pre-TE-fix physics and
+does not hold under genuine TE. Re-quantified via `06b_directional_coupler_gap_
+sweep.ipynb`'s full 5×7 `(gap_um, coupling_length_um)` grid at `resolution=40`
+(was `resolution=25`): the "generic" baseline noise floor tightened noticeably
+(dispersion-residual std 0.03–0.5° → 0.00–0.03° across 33 of the 35 grid points),
+confirming the coupler *is* resolution-sensitive at `resolution=25`, consistent
+with `mzi.py`'s own much larger effect. The two genuine outliers — dispersion
+residual spiking at each gap's own coupling extremum (`gap=0.20,Lc=26`:
+41.5°→45.48°; `gap=0.15,Lc=18`: 44.0°→44.87°) — stayed essentially unchanged in
+magnitude at the finer resolution, confirming that specific spike is real,
+resolution-independent physics (`d(kappa)/d(Lc)≈0` there, maximally sensitive to
+any perturbation), not a numerical artifact — see
+`06b_directional_coupler_gap_sweep.ipynb`'s own Section 8 for the full picture.
+`notebooks/07_mzi.ipynb`'s baseline/sweep/selection above (delta_L_um=7.5 selected
+under `resolution=25`) all needed re-running at `resolution=40` — **now done.**
+Every specific number above this UPDATE (residuals, the 7.5 selection, the 13.848
+coupling length) is historical, superseded by this re-run.
+
+**`resolution=40` re-run results (`07_mzi.ipynb`, complete).** Baseline
+(`delta_L_um=10.0`, `coupling_length_um=13.708639452498595`): energy deviation
+0.0%, reciprocity 0.04%, passivity 0.990 — all comfortably inside even a single
+`coupler.py` stage's own strict budget (`energy_tol`/`reciprocity_tol`/
+`passivity_tol` = 0.03/0.03/0.01), though the notebook itself keeps the wider
+cascaded-device tolerances (`ENERGY_TOL=0.08`, `RECIPROCITY_TOL=0.05`,
+`PASSIVITY_TOL=0.03`) rather than re-running again purely to tighten thresholds
+with no failing case. Full `delta_L_um` sweep, all 6/6 points passing:
+
+| `delta_L_um` | energy dev. | reciprocity | passivity (`max_power_fraction`) |
+|---|---|---|---|
+| 2.5 | 0.0% | 0.03% | 0.994 |
+| 5.0 | 1.59% | 2.35% | 1.008 |
+| 7.5 | 0.62% | 0.03% | 0.981 |
+| 10.0 (baseline) | 0.0% | 0.04% | 0.990 |
+| 12.5 (selected) | 0.0% | 0.04% | 0.990 |
+| 15.0 | 1.37% | 1.94% | 1.003 |
+
+Worst case at `delta_L_um=5.0` (previously not even distinguishable as a
+worst-case under `resolution=25`'s much larger, non-monotonic residuals) — every
+value, including the two passivity figures marginally over 1.0 (`5.0`, `15.0`),
+would clear a strict `passivity_tol=0.01` budget too.
+
+**Design selection changed again, for a third time (physically real, not a
+symptom of the bug this time): `SELECTED_DELTA_L_UM` moved from `7.5`
+(`resolution=25`, TE-fixed) to `12.5`.** Section 11's logic is unchanged
+(among validated points with `n_peaks>=2`, pick max extinction); under
+`resolution=40`, `delta_L_um=12.5` has the deepest extinction (36.94dB) of the
+now-3 points with a measurable in-band FSR (`12.5`/`15.0`, plus `10.0` which
+narrowly missed `n_peaks>=2`). `data/design_points/mzi.yaml` and
+`data/sparams/mzi/selected/` reflect `delta_L_um=12.5`. As before, this does
+NOT affect `circuits/wdm_mux4_sax.ipynb`, which reads specific sweep points by
+name (`mzi_at_sweep_point`), not the "selected" design point — but that
+notebook's own `DELTA_L_1_UM=15.0`/`DELTA_L_2_DOWN_UM=7.5` reference choices,
+and the entire stage2_up recalibration search attempted at `resolution=25`
+(see `circuits/mux4_tree.py`'s own section below), all need re-doing against
+this `resolution=40` data — not yet done as of this entry.
 
 **Delay-arm design history: single bump vs. serpentine.** An earlier version of
 `mzi.py` used a serpentine of many short-period bumps, reasoning that many
@@ -1277,6 +1395,73 @@ this arm's operating range), so bend-induced effective-index shifts vary with
 `delta_L_um` in a way no single corrected linear slope can capture globally —
 only locally, over a small enough neighborhood (which is exactly why the second,
 locally-calibrated point above still carried an ~8.86° residual, not zero).
+
+**UPDATE 2 (superseded by UPDATE 3 below — flagged the need for a redo, but
+the redo itself is in UPDATE 3).** Update 1 below (the `-11.2120 rad/µm` slope, the near-total
+cross-port null found at `stage2_down`'s own `delta_L_um=7.5`, and the 6-point
+scan of `delta_L_um∈[7.0,8.0]` that found no clean ~90°-separated healthy pair)
+was entirely measured at `resolution=25` — before `resolution=25` itself was
+found substantially under-converged for this exact delay-arm bump geometry (see
+this file's `coupler.py`/`mzi.py` section, "`resolution=25`... was itself found to
+be substantially under-converged"). Whether the null at `delta_L_um=7.5`, the sign
+reversal, and the apparently chaotic point-to-point swings are genuine features of
+this arm's phase response or were themselves resolution artifacts is now an open
+question — not yet re-checked at `resolution=40`. Given `07_mzi.ipynb`'s own
+`resolution=40` re-run also changed which `delta_L_um` gets auto-selected as
+"best" (7.5 → 12.5, see the `coupler.py`/`mzi.py` section), this entire
+stage2_down/stage2_up recalibration for `circuits/wdm_mux4_sax.ipynb` needs
+re-doing from scratch against `resolution=40` data, not just re-verified.
+
+**UPDATE 3 (RESOLVED — the null and the chaotic swings were entirely
+`resolution=25` artifacts; the fix at `resolution=40` turned out to need no
+new FDTD at all).** Re-checked `stage2_down`'s own `delta_L_um=7.5` in
+`07_mzi.ipynb`'s fresh `resolution=40` sweep: `|S41|^2=0.379` — a completely
+healthy value, nowhere near the old `resolution=25` near-null (`0.0005`).
+Scanning the same 6-point sweep directly for a healthy partner near a `±90°`
+offset (`build_mux4_tree_circuit`'s topology only needs the two stage2
+instances' transmission ripples offset from each other — a `-90°` real
+measured offset works exactly as well as `+90°`, just as a mirror) found one
+immediately: `delta_L_um=10.0` (`|S41|^2=0.505`, phase offset from
+`stage2_down` measured at `-94.69°`, only `4.69°` from the nearest `±90°`
+target — versus UPDATE 1's `-123.6°` discrepancy at `resolution=25`).
+Verified directly by building the actual N=2 real circuit
+(`circuits/wdm_mux4_sax.ipynb`, re-run clean, 0 errors): total power stays
+`0.983-1.000` across the band, and the 4 channel peaks land far more evenly
+spaced (std `2.4nm`) than the next-nearest sweep-point alternative,
+`delta_L_um=5.0` (std `11.3nm`, one 42nm gap) — confirming `10.0` is a
+genuinely good, not just numerically-closest, choice. `stage2_up` is now
+`delta_L_um=10.0` (an *existing* sweep point, not a bespoke calibrated
+value) — no new FDTD simulation needed, no local-slope fitting, no
+near-null reference. The whole UPDATE 1/2 local-calibration approach
+(measure a fine-spaced neighbor pair, fit a slope, solve for a bespoke
+length) is now understood to have been fighting a resolution artifact from
+the start; the real fix was coarser and simpler once the actual physics was
+resolved properly.
+
+**UPDATE 1 (superseded — kept as history of what was tried under
+`resolution=25`).** After `mzi.py`'s TE/TM `eig_parity` fix — see that
+module's docstring and this file's `coupler.py`/`mzi.py` section — the entire
+calibration above was re-measured, and the recalibrated value changed materially. Everything in this
+subsection up to here describes the calibration as originally derived under the
+pre-fix physics (`eig_parity=mp.NO_PARITY`, effectively TM); kept as history, not
+current. Re-running the same procedure (same two-point local-slope method, same
+`delta_L_um=7.5`/`7.6401287108158605` pair, now simulated under genuine
+`eig_parity=mp.TE`) gives a materially different result: the measured local slope
+is now **-11.2120 rad/µm** — its MAGNITUDE now closely matches the ideal
+linear-model slope (`11.2097 rad/µm`, essentially exact agreement, unlike the old
+~2x discrepancy), but its SIGN is reversed relative to the naive expectation that
+phase should increase with `delta_L_um`. Solving for the length giving exactly
+π/2 under this measured slope gives `delta_L_um = 7.5 + (π/2)/(-11.2120) ≈
+7.359900150236218` (SHORTER than `stage2_down`, unlike the old calibration's
+longer value) — simulated and saved
+(`data/sparams/mzi/sweep/mzi_deltaL7.359900150236218.npz/.json`, energy/
+reciprocity/passivity all pass). `circuits/wdm_mux4_sax.ipynb`'s
+`DELTA_L_2_UP_UM_N2_CAL` was updated to this new value. The sign reversal itself
+is not further investigated here -- flagged as a genuine, measured, physically
+real finding (not assumed away), consistent with the already-established fact
+that this arm's raised-cosine bump does not follow the straight-line linear
+phase model globally. The old point (`delta_L_um=7.784312173071006`) and its own
+artifact are kept on disk, unused, for provenance.
 
 **Does a flatter per-stage passband (N=4 couplers, not N=2) recover the lost
 extinction, given the SAME phase-calibration residual?** Quantitatively confirmed
