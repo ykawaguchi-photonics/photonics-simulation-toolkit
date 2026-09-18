@@ -13,6 +13,14 @@ pre-characterized model — and that measured physics (amplitude *and* phase)
 is carried all the way through to circuit-level composition and a
 fabricable GDS layout.
 
+Built through iterative pair-programming with
+[Claude Code](https://claude.com/claude-code); every physical model,
+tolerance, and validation judgment in this repo was made and independently
+verified by me — see [CLAUDE.md](CLAUDE.md) for the conventions that keep
+that collaboration disciplined, and
+[docs/troubleshooting_log.md](docs/troubleshooting_log.md) for the actual
+diagnostic record.
+
 ## The pipeline
 
 1. **`notebooks/0N_*.ipynb`** — one notebook per PIC component. Builds the

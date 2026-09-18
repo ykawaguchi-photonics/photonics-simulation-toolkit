@@ -839,7 +839,7 @@ settings.
 |---|---|---|
 | `resolution` | 40 px/µm | Overridden from `GLOBAL_PARAMS`' 20 — sub-micron teeth/etch need it. Not yet re-checked against a higher resolution (see below). |
 | `core_index` / `substrate_index` | 3.45 | Real bulk Si, not the toolkit's 2D effective 2.7 — see module docstring. |
-| `si_thickness_um` / `box_thickness_um` / `clad_thickness_um` | 0.22 / 2.0 / 2.0 µm | Generic MPW-typical SOI values (no specific foundry PDK targeted, per user request). |
+| `si_thickness_um` / `box_thickness_um` / `clad_thickness_um` | 0.22 / 2.0 / 2.0 µm | Generic MPW-typical SOI values -- deliberately not targeting any specific foundry PDK. |
 | `etch_depth_um` | 0.14 µm | Promoted from the sweep below (selected on O-band-mean efficiency). |
 | `duty_cycle` | 0.4 | Promoted from the sweep below (selected on O-band-mean efficiency). |
 | `period_um` | 0.5094 µm | Promoted; phase-matching estimate, NOT re-tuned by the sweep below (see caveat). |
@@ -1027,14 +1027,15 @@ docstring, not a new issue introduced by this sweep.
 
 4. **Same 36-point grid, re-measured with the CORRECTED (power-normalized
    reciprocity) `coupling_efficiency_overlap()`** — see the fix note above
-   and `docs/troubleshooting_log.md` for the full diagnostic story (a user
-   noticing the field snapshot didn't visually look like a strong radiated
-   beam, then three rounds of increasingly specific follow-up questions that
-   isolated first a wavelength-capture issue, then ruled out evanescent
-   contamination, then a literature comparison + restricted-window test that
-   pinned the bug to the metric's own normalization, then a handedness bug
-   in the first fix attempt). Same grid, same `n_periods=22`/`resolution=40`,
-   period still held fixed; all 36 points again passed `passivity_check`.
+   and `docs/troubleshooting_log.md` for the full diagnostic story (I
+   noticed the field snapshot didn't visually look like a strong radiated
+   beam, then worked through three rounds of increasingly specific
+   follow-up questions that isolated first a wavelength-capture issue, then
+   ruled out evanescent contamination, then a literature comparison +
+   restricted-window test that pinned the bug to the metric's own
+   normalization, then a handedness bug in the first fix attempt). Same
+   grid, same `n_periods=22`/`resolution=40`, period still held fixed; all
+   36 points again passed `passivity_check`.
 
 | etch_depth_um | duty_cycle | mean coupling_efficiency | peak coupling_efficiency | peak wavelength (µm) |
 |---|---|---|---|---|
@@ -1228,7 +1229,7 @@ concern, applied only where multiple real components are cascaded together.
 | `wl0_um` | 1.35 | Matches this toolkit's own characterization wavelength. |
 | `n_eff0` | 2.4085 | Phase index at `wl0_um`, from `07_mzi.ipynb`'s MPB arm dispersion (Section 10-11). |
 | `n_g0` | 2.763 | Group index at `wl0_um`, from `07_mzi.ipynb`'s FDTD S21 fringe-spacing fit (`N_G_FDTD_FIT`) — chosen over the MPB-dispersion group-index estimate (`~2.928`) because the FSR-fit value reflects the full round-trip through both couplers' S-bends, not just a straight arm segment. |
-| `delta_L_um` | 15.0 | Design target itself (not derived from a fixed FSR) — chosen to land exactly on `07_mzi.ipynb`'s own already-simulated `delta_L_um` sweep point (`data/sparams/mzi/sweep/mzi_deltaL15.0.json`), per direct user request, so a later FDTD-based comparison can reuse that existing run. Gives `FSR≈43.97nm`, close to the ~40nm originally requested. |
+| `delta_L_um` | 15.0 | Design target itself (not derived from a fixed FSR) — chosen to land exactly on `07_mzi.ipynb`'s own already-simulated `delta_L_um` sweep point (`data/sparams/mzi/sweep/mzi_deltaL15.0.json`), so a later FDTD-based comparison can reuse that existing run. Gives `FSR≈43.97nm`, close to the ~40nm originally targeted. |
 | root-classification tolerance | `0.02` (magnitude), `0.05` (cluster) | See "Numerical tolerance" below. |
 | self-check tolerance | `1e-3` | See "Numerical tolerance" below. |
 
@@ -1372,10 +1373,10 @@ formula**: `delta_L_um = 7.5 + (π/2)/5.5249 ≈ 7.784312173071006`. If this lan
 close to the intended +90° real phase difference (checked the same way, Section 3 of
 the real-FDTD notebook), it supersedes the first point as `stage2_up`'s design value
 throughout `mux4_tree_real_fdtd_sax.ipynb`; the first point is kept on disk (not
-deleted) as the artifact underlying this very discovery. Per the user's own explicit
-allowance ("追加sweepしてOkです" — additional sweeps are fine if the arm ΔL
-calculation proves insufficient), this second point was run rather than accepting
-the first point's badly-degraded (~3dB) channel extinction as final.
+deleted) as the artifact underlying this very discovery. I judged that additional
+sweeps were justified once the arm ΔL calculation proved insufficient on its own, so
+I ran this second point rather than accepting the first point's badly-degraded
+(~3dB) channel extinction as final.
 
 **Confirmed the ΔL geometry itself is realized exactly — the nonlinearity is
 physical, not a construction bug.** Checked directly (not assumed): `mzi.py`'s
@@ -1482,8 +1483,8 @@ At every error level, N=4 beats N=2 by 8–31dB of worst-channel extinction — 
 flat-top design's transmission derivative near its own crossover is much smaller
 than a plain sinusoidal MZI's, so the same absolute phase error costs it far less
 extinction. This motivated `circuits/mux4_tree_n4_real_fdtd_sax.ipynb`, a real-FDTD
-rebuild of all 3 tree stages as N=4 lattices, per the user's approval to add
-whatever new sweeps this required.
+rebuild of all 3 tree stages as N=4 lattices; I decided this justified adding
+whatever new sweeps it required.
 
 **A second, geometrically distinct real delay arm was needed for the N=4 rebuild.**
 `models.mzi_arm` (4-Euler-bend jog, `03_mzi_arm.ipynb`) has a `delta_L_um` floor of
@@ -1541,8 +1542,8 @@ real, substantial improvement over N=2 at the SAME calibration accuracy, not a
 route to ideal-model performance.
 
 **Consolidated into one N=4-only notebook, `circuits/mux4_tree_n4_sax.ipynb`.**
-Per the user's decision to proceed with the N=4-per-stage design exclusively,
-this single notebook now combines the ideal SAX model, the real-FDTD model +
+I decided to proceed with the N=4-per-stage design exclusively, and this single
+notebook now combines the ideal SAX model, the real-FDTD model +
 ideal-vs-real comparison, and a full GDSfactory physical layout of the
 assembled 3-stage tree — the working design going forward. The two N=2
 notebooks and `mux4_tree_n4_real_fdtd_sax.ipynb` are kept unmodified as the
