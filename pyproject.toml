@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pic-toolkit"
 version = "0.1.0"
-description = "LEGO-style photonic component simulation and circuit toolkit (Meep + SAX)"
+description = "Component-based photonic simulation and circuit toolkit (Meep + SAX)"
 requires-python = ">=3.10"
 
 [tool.setuptools.packages.find]

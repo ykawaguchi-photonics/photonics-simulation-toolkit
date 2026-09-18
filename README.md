@@ -1,14 +1,19 @@
 # photonics-simulation-toolkit
 
-A "LEGO block" toolkit for building, validating, and composing silicon
-photonic integrated circuit (PIC) components with [Meep](https://meep.readthedocs.io/)
-FDTD, [gdsfactory](https://gdsfactory.github.io/gdsfactory/), and
-[SAX](https://flaport.github.io/sax/).
+An end-to-end toolkit for building, physically validating, and composing
+silicon photonic integrated circuit (PIC) components — from
+[Meep](https://meep.readthedocs.io/) FDTD simulation, through
+[SAX](https://flaport.github.io/sax/) circuit-level composition, to
+[gdsfactory](https://gdsfactory.github.io/gdsfactory/) GDS layout output.
 
-## What this is
+![Simulation-to-layout workflow: geometry design in gdsfactory, FDTD simulation in Meep, S-parameter extraction in SAX, circuit simulation in SAX, GDS layout export in gdsfactory](docs/images/workflow_overview.png)
 
-Each component is built once, in isolation, and its validated result becomes
-a reusable building block for the next layer:
+Every stage above is backed by a real Meep FDTD run — not an idealized or
+pre-characterized model — and that measured physics (amplitude *and* phase)
+is carried all the way through to circuit-level composition and a
+fabricable GDS layout.
+
+## The pipeline
 
 1. **`notebooks/0N_*.ipynb`** — one notebook per PIC component. Builds the
    geometry (gdsfactory-first), runs a Meep FDTD simulation, characterizes
@@ -21,28 +26,50 @@ a reusable building block for the next layer:
    FDTD.
 3. **`circuits/`** — SAX circuit-level compositions built purely from those
    cached component models, comparing an ideal analytic model against the
-   genuinely FDTD-measured one.
+   genuinely FDTD-measured one, then exporting the result as GDS.
 
 Each notebook is written as a reader-facing deliverable — not personal lab
-notes — with a consistent structure and explicit checkpoints before any
-expensive or consequential step.
+notes — with a consistent structure and explicit **STOP** checkpoints before
+any expensive or consequential step.
+
+## Why this is more than a set of simulation notebooks
+
+- **The loop actually closes.** Component-level FDTD results don't stay in
+  their own notebook — `circuits/wdm_sax.ipynb` is the first module in this
+  repo to call `sax.circuit()`, composing cached, genuinely FDTD-measured
+  coupler and delay-arm models (preserving complex S-parameters, magnitude
+  *and* phase, not just power) into a working interferometric filter, then
+  exporting it as GDS.
+- **Real physics measurably changes the outcome.** In
+  `circuits/wdm_mux4_sax.ipynb`'s 4-channel WDM demultiplexer, moving from a
+  2-coupler to a 4-coupler lattice — validated with real FDTD data, not just
+  an ideal model — improved the worst channel's extinction ratio from
+  **1.7 dB to 10.1 dB**. That notebook also produces this repo's first
+  *branching* (non-series) GDS layout.
+- **Includes a genuinely advanced simulation technique**, not just parameter
+  sweeps: `04_bend_topology_optimization.ipynb` uses Meep's adjoint-based
+  topology optimization (`autograd` + `nlopt`) to optimize a waveguide
+  bend's geometry directly from a gradient of the simulated field.
+- **9 of 12 components are fully validated end-to-end** — cached ground-truth
+  YAML *and* a Meep-free SAX model — not just a one-off simulation notebook;
+  see the "cached model" column below.
 
 ## Components
 
-| Notebook | Component |
-|---|---|
-| `01_waveguide_baseline.ipynb` | Straight waveguide baseline (TE mode, cross-section characterization) |
-| `02_bent_waveguide.ipynb` | Bent waveguide (radius sweep, circular vs. Euler bends) |
-| `03_mzi_arm.ipynb` | MZI delay arm (jog geometry) |
-| `03b_mzi_arm_dense_sweep.ipynb` | Densified ΔL sweep for the delay arm |
-| `04_bend_topology_optimization.ipynb` | Adjoint topology optimization of a waveguide bend |
-| `05_racetrack_resonator.ipynb` | Racetrack resonator |
-| `06_directional_coupler.ipynb` | Directional coupler (baseline) |
-| `06b_directional_coupler_gap_sweep.ipynb` | 2D gap × length sweep for the coupler |
-| `07_mzi.ipynb` | Passive Mach-Zehnder interferometer |
-| `08_mzm.ipynb` | Mach-Zehnder modulator (push-pull Vπ) |
-| `09_grating_coupler.ipynb` | Grating coupler (x-z cross-section) |
-| `10_add_drop_ring_resonator.ipynb` | Add-drop ring resonator |
+| Notebook | Component | Cached model |
+|---|---|---|
+| `01_waveguide_baseline.ipynb` | Straight waveguide baseline (TE mode, cross-section characterization) | ✅ |
+| `02_bent_waveguide.ipynb` | Bent waveguide (radius sweep, circular vs. Euler bends) | ✅ |
+| `03_mzi_arm.ipynb` | MZI delay arm (jog geometry) | ✅ |
+| `03b_mzi_arm_dense_sweep.ipynb` | Densified ΔL sweep for the delay arm | — (supporting sweep) |
+| `04_bend_topology_optimization.ipynb` | Adjoint topology optimization of a waveguide bend | ✅ |
+| `05_racetrack_resonator.ipynb` | Racetrack resonator | ✅ |
+| `06_directional_coupler.ipynb` | Directional coupler (baseline) | ✅ |
+| `06b_directional_coupler_gap_sweep.ipynb` | 2D gap × length sweep for the coupler | — (supporting sweep) |
+| `07_mzi.ipynb` | Passive Mach-Zehnder interferometer | ✅ |
+| `08_mzm.ipynb` | Mach-Zehnder modulator (push-pull Vπ) | ✅ |
+| `09_grating_coupler.ipynb` | Grating coupler (x-z cross-section) | not yet promoted |
+| `10_add_drop_ring_resonator.ipynb` | Add-drop ring resonator | ✅ |
 
 ## Circuit-level compositions
 
@@ -54,7 +81,8 @@ component models:
   FDTD-measured component S-parameters, with GDS layout export.
 - **`wdm_mux4_sax.ipynb`** — 4-channel WDM demultiplexer using a cascaded
   binary-tree ("Mux4") topology built from the `wdm_sax` lattice as its
-  per-node building block, with GDS layout export.
+  per-node building block, with GDS layout export. Real FDTD data pushed the
+  worst channel's extinction from 1.7 dB (N=2) to 10.1 dB (N=4).
 
 See [circuits/README.md](circuits/README.md) for the full derivation.
 

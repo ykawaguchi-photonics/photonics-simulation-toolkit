@@ -1,7 +1,7 @@
 """Meep adjoint (gradient-based) topology optimization of a 90-degree silicon
 waveguide bend.
 
-This is the fourth "LEGO block" in the toolkit, and the first that does NOT
+This is the fourth component in the toolkit, and the first that does NOT
 pick a design from a small parametric family (a radius, a gap) -- instead, a
 freeform pixel density inside a fixed design-region footprint is optimized
 directly against an adjoint-computed gradient (`meep.adjoint` + `autograd` +

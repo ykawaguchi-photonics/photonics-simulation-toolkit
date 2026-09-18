@@ -1,6 +1,6 @@
 """Meep simulation of a 90-degree bent silicon strip waveguide.
 
-This is the third "LEGO block" in the toolkit, and the first with a genuinely
+This is the third component in the toolkit, and the first with a genuinely
 non-collinear two-port layout: light enters horizontally (traveling in +x)
 through port `o1` and exits vertically (traveling in +y) through port `o2`.
 

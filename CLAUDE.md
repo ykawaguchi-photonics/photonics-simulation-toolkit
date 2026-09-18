@@ -12,7 +12,7 @@ rationale). Add to those files, don't re-litigate their content in a notebook.
 
 ## 1. What this repo is
 
-A "LEGO block" toolkit: each `notebooks/0N_*.ipynb` builds and validates one
+A component-based toolkit: each `notebooks/0N_*.ipynb` builds and validates one
 PIC component via MEEP FDTD, saves `data/design_points/<component>.yaml`
 (the single source of truth for that component's parameters plus its
 fitted/measured model), and a matching `src/pic_toolkit/models/<component>.py`
