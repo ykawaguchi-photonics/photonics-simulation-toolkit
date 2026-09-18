@@ -7,18 +7,35 @@ device coupler.py's own docstring anticipates, this module is the ACTIVE one
 "Unlike a Mach-Zehnder MODULATOR" paragraph): both arms stay the same length,
 and the controllable phase shift comes entirely from Delta_n, not geometry.
 
-**Vpi is DEFINED here, not measured.** The push-pull operating point is
+Simulation model: 2D effective-index cross-section (x = propagation, y =
+transverse), the same convention as `waveguide.py`/`coupler.py`/`mzi.py` --
+`core_index=2.7` is this toolkit's shared effective index, not bulk
+silicon's real refractive index (~3.45; see `grating_coupler.py`, the one
+module that resolves the real x-z layer stack instead). Material is
+non-dispersive throughout (`mp.Medium(index=...)`, constant across the
+analyzed band) -- no wavelength-dependent Sellmeier/Lorentzian model is used
+anywhere in this toolkit.
+
+**Vpi here means a Delta_n-defined (Delta_n-equivalent) operating point,
+not a real device's measured Vpi.** The push-pull operating point is
 n_upper = core_index + Delta_n/2, n_lower = core_index - Delta_n/2, with
 Delta_n_vpi the TOTAL index difference between arms at which this design is
 meant to deliver a full pi phase swing. The arm length needed for that is
 then DERIVED (see `plateau_length_um`/`arm_length_um`) from an idealized
-formula corrected by a confinement-factor PRIOR (`gamma_core_prior`) carried
-over from `PIC_components/MZM/03_mzm_design_v4.ipynb`'s own embedded-device
-Meep calibration (that notebook's Delta_n regime differs by 10x, so this is
-a starting estimate, not an assumed-exact value) -- notebooks/08_mzm.ipynb's
-Section 7 Meep-validates how close the derived length actually lands to a
-true pi swing and reports the REAL confinement factor without forcing
-agreement, exactly as 03_mzm_design_v4.ipynb's own Section 7a does.
+formula, Delta_n_eff = Gamma_eff * Delta_n_material, corrected by an
+effective phase-response-factor PRIOR (`phase_factor_prior`) carried over
+from `PIC_components/MZM/03_mzm_design_v4.ipynb`'s own embedded-device Meep
+calibration (that notebook's Delta_n regime differs by 10x, so this is a
+starting estimate, not an assumed-exact value). Gamma_eff is NOT a
+0<=Gamma<=1 mode-confinement factor -- it also absorbs whatever modeling
+error the idealized formula itself carries, which is why
+`phase_factor_prior=1.02` is allowed to exceed 1 (see its own
+DEFAULT_PARAMS comment for why an actual confinement-factor measurement was
+abandoned in favor of this looser, explicitly-not-a-confinement-factor
+prior). notebooks/08_mzm.ipynb's Section 7 Meep-validates how close the
+derived length actually lands to a true pi swing and reports the REAL
+phase-response factor without forcing agreement, exactly as
+03_mzm_design_v4.ipynb's own Section 7a does.
 
 This module does not model the electrical (voltage -> carrier density ->
 Delta_n) mechanism -- Delta_n is imposed directly as a numerical stand-in,
@@ -134,18 +151,26 @@ DEFAULT_PARAMS = {
     "margin_sigma": 4.0,       # erf transition margin (in units of sigma_um) kept
                                # inactive at each arm end, so Delta_n ~ 0 well before
                                # reaching either coupler stage.
-    "gamma_core_prior": 1.02,  # confinement-factor PRIOR used only to SIZE the arm
-                               # length -- carried over from
+    "phase_factor_prior": 1.02,  # effective phase-response-factor PRIOR used only to
+                               # SIZE the arm length -- carried over from
                                # PIC_components/MZM/03_mzm_design_v4.ipynb's own
-                               # embedded-device Meep calibration (Gamma_core~1.02 at
+                               # embedded-device Meep calibration (Gamma_eff~1.02 at
                                # that notebook's much larger push-pull differential,
                                # 0.02 vs. this module's 0.002) since no better a
                                # priori estimate exists (an isolated-waveguide
                                # confinement measurement was tried there and found
                                # unreliable -- Gamma above the physical bound of 1,
                                # sign-unstable vs. resolution -- and dropped).
+                               # NOT a 0<=Gamma<=1 mode-confinement factor: an actual
+                               # confinement measurement was exactly what got dropped
+                               # above for being unreliable, so this PRIOR is instead
+                               # an effective phase-response factor in
+                               # Delta_n_eff = Gamma_eff * Delta_n_material, which is
+                               # why >1 is an allowed value here rather than a bug --
+                               # it also absorbs the idealized sizing formula's own
+                               # modeling error, not just mode overlap.
                                # notebooks/08_mzm.ipynb Meep-measures the REAL
-                               # confinement factor at this module's own operating
+                               # phase-response factor at this module's own operating
                                # point and reports it without forcing agreement.
 
     # --- path-length bias (optional; delta_L_um=0.0 is the pure-modulator
@@ -179,14 +204,16 @@ DEFAULT_PARAMS = {
 
 
 def plateau_length_um(params: dict) -> float:
-    """Idealized-then-confinement-corrected plateau length for a pi push-pull
-    swing at Delta_n = delta_n_vpi:
-        pi = Gamma_core * (2*pi/wl0) * Delta_n * L  =>  L = wl0 / (2*Gamma_core*Delta_n)
-    Uses gamma_core_prior (see its DEFAULT_PARAMS comment) as the best
-    available estimate for sizing -- not re-derived from a measurement in
-    this module itself.
+    """Idealized-then-phase-factor-corrected plateau length for a pi
+    push-pull swing at Delta_n = delta_n_vpi:
+        pi = Gamma_eff * (2*pi/wl0) * Delta_n * L  =>  L = wl0 / (2*Gamma_eff*Delta_n)
+    Gamma_eff (Delta_n_eff = Gamma_eff * Delta_n_material) is an effective
+    phase-response factor, NOT a 0<=Gamma<=1 mode-confinement factor -- see
+    `phase_factor_prior`'s own DEFAULT_PARAMS comment for why it's allowed to
+    exceed 1. Uses phase_factor_prior as the best available estimate for
+    sizing -- not re-derived from a measurement in this module itself.
     """
-    return params["wl0_um"] / (2.0 * params["gamma_core_prior"] * params["delta_n_vpi"])
+    return params["wl0_um"] / (2.0 * params["phase_factor_prior"] * params["delta_n_vpi"])
 
 
 def arm_length_um(params: dict) -> float:

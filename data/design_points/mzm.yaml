@@ -13,8 +13,8 @@ parameters:
   margin_sigma: 4.0
 arm_length_um: 354.88235294117646
 plateau_length_um: 330.88235294117646
-gamma_core_prior: 1.02
-gamma_core_measured: 0.9358498707616133
+phase_factor_prior: 1.02
+phase_factor_measured: 0.9358498707616133
 dphi_meep_at_vpi_pi: 0.9174998732956993
 source_artifact: data/sparams/mzm/baseline/mzm_baseline
 provenance:
@@ -38,10 +38,12 @@ validation:
     tolerance: 0.01
     passed: true
   passed: true
-rationale: 'Delta_n_vpi=0.002 is a user-specified design target (push-pull, n_upper/n_lower
+rationale: 'Delta_n_vpi=0.002 is an explicitly chosen design target (push-pull, n_upper/n_lower
   = core_index +/- Delta_n/2), not a value found by sweep-and-select. The arm length
-  is derived from this target via an idealized formula corrected by gamma_core_prior
+  is derived from this target via an idealized formula corrected by phase_factor_prior
   (reused from PIC_components/MZM/03_mzm_design_v4.ipynb''s own embedded-device calibration
   at a different Delta_n regime), then Meep-validated directly (Section 10): the achieved
-  phase swing is 0.917 pi against a 1.000 pi target. Edit this rationale directly
-  if a different Delta_n_vpi or gamma_core_prior is preferred.'
+  phase swing is 0.917 pi against a 1.000 pi target. phase_factor_prior is an effective
+  phase-response factor, not a 0<=Gamma<=1 mode-confinement factor -- see mzm.py''s
+  own DEFAULT_PARAMS comment for why it is allowed to exceed 1. Edit this rationale
+  directly if a different Delta_n_vpi or phase_factor_prior is preferred.'

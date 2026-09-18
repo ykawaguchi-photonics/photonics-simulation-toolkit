@@ -75,7 +75,7 @@ any expensive or consequential step.
 | `06_directional_coupler.ipynb` | Directional coupler (baseline) | ✅ |
 | `06b_directional_coupler_gap_sweep.ipynb` | 2D gap × length sweep for the coupler | — (supporting sweep) |
 | `07_mzi.ipynb` | Passive Mach-Zehnder interferometer | ✅ |
-| `08_mzm.ipynb` | Mach-Zehnder modulator (push-pull Vπ) | ✅ |
+| `08_mzm.ipynb` | Mach-Zehnder modulator (push-pull, Δn-defined Vπ) | ✅ |
 | `09_grating_coupler.ipynb` | Grating coupler (x-z cross-section) | not yet promoted |
 | `10_add_drop_ring_resonator.ipynb` | Add-drop ring resonator | ✅ |
 
@@ -142,6 +142,26 @@ pattern, and known simulation gotchas) before editing any notebook or
 - [Meep](https://meep.readthedocs.io/) (`pymeep`) — FDTD electromagnetic simulation, including adjoint topology optimization (`autograd` + `nlopt`)
 - [gdsfactory](https://gdsfactory.github.io/gdsfactory/) — parametric GDS layout generation
 - [SAX](https://flaport.github.io/sax/) — circuit-level S-parameter composition
+
+## Modeling assumptions
+
+Every component runs a **2D effective-index cross-section** (propagation in
+the simulation plane, vertical confinement collapsed into one number,
+`core_index=2.7`) rather than a full 3D/full-vector simulation of a real
+ridge waveguide — this toolkit's shared effective index, not bulk silicon's
+real refractive index (~3.45). `09_grating_coupler.ipynb` is the one
+exception, resolving the real x-z layer stack with real bulk indices
+instead. All materials are **non-dispersive**: every `mp.Medium(index=...)`
+call uses a single constant index across the analyzed wavelength band, with
+no wavelength-dependent (Sellmeier/Lorentzian) susceptibility model anywhere
+in the toolkit.
+
+These are deliberate, stated Phase-1 simplifications, not oversights — see
+each component's own module docstring (`src/pic_toolkit/meep_sim/*.py`) for
+where a specific approximation (a phenomenological loss knob, a Gaussian
+fiber-mode model, a coupled-mode-theory fit, etc.) stands in for first-
+principles physics, and `docs/simulation_settings_record.md` for the
+empirical basis behind each one.
 
 ## More documentation
 

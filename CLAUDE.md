@@ -20,6 +20,15 @@ reads that YAML in a **meep-free** process to serve as a SAX-compatible
 component model. See `README.md` / `circuits/README.md` for the component
 list.
 
+**Shared modeling assumption, every component:** a 2D effective-index
+cross-section (`core_index=2.7`, not bulk silicon's ~3.45) and non-dispersive
+materials (a single constant index across the analyzed band), unless a
+module explicitly says otherwise (`grating_coupler.py` resolves a real x-z
+layer stack with real bulk indices instead). Any new component follows this
+convention by default and must say so explicitly in its own module
+docstring if it deviates — see `README.md`'s "Modeling assumptions" section
+for the reader-facing version of this statement.
+
 ## 2. Audience and tone for notebooks
 
 Notebooks are external-reader-facing deliverables (a PIC-engineer portfolio
