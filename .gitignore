@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Internal-only assets: symlinked to a local-only private repo
+# (../photonics-research-private), never tracked here.
+/CLAUDE.md
+/docs/troubleshooting_log.md
+/docs/simulation_settings_record.md
