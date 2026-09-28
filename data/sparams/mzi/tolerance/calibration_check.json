@@ -1,0 +1,9 @@
+{
+  "component": "mzi",
+  "study": "fabrication_tolerance_calibration_check",
+  "resolution": 50,
+  "calibration_a": -0.015568347487782954,
+  "calibration_b": -0.004363769906288735,
+  "mean_abs_err_S41": 0.007758575761172994,
+  "description": "Comparison of the real nominal full-MZI FDTD spectrum (target31/target41, this notebook's Section 2, resolution=50) against the coupler-FDTD + calibrated-arm-phase sax.circuit() reconstruction (S31_cal/S41_cal) this notebook's Section 3 fits. Plotted in wdm_sax.ipynb's own comparison section, not here -- see docs/simulation_settings_record.md."
+}

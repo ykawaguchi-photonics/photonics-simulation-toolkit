@@ -1,0 +1,53 @@
+{
+  "component": "mzi",
+  "study": "fabrication_tolerance",
+  "method": "sax_circuit_coupler_fdtd_plus_calibrated_arm_phase",
+  "nominal_design_point": "data/design_points/mzi.yaml",
+  "bias_tol_um": 0.01,
+  "correlation_model": "single_cd_bias_anti_correlated_width_gap",
+  "sampling": "deterministic_step_sweep",
+  "bias_step_nm": 5,
+  "n_points": 5,
+  "resolution": 50,
+  "calibration_a": -0.015568347487782954,
+  "calibration_b": -0.004363769906288735,
+  "n_passed": 5,
+  "summary_statistics": {
+    "extinction_db": {
+      "mean": 43.73502044677734,
+      "std": 5.7263733709732625,
+      "min": 37.35196304321289,
+      "max": 54.282649993896484,
+      "n": 5
+    },
+    "fsr_um": {
+      "mean": 0.04911591730253839,
+      "std": 0.0001865285641350303,
+      "min": 0.048845830292731485,
+      "max": 0.049350809293126296,
+      "n": 4
+    },
+    "power_S31_at_wl0": {
+      "mean": 0.37602035105228426,
+      "std": 0.19970308068557144,
+      "min": 0.094035804271698,
+      "max": 0.6488697528839111,
+      "n": 5
+    },
+    "power_S41_at_wl0": {
+      "mean": 0.6239573717117309,
+      "std": 0.19968589432695794,
+      "min": 0.3511269986629486,
+      "max": 0.9058964252471924,
+      "n": 5
+    }
+  },
+  "nominal": {
+    "fsr_um": 0.051100179709308025,
+    "extinction_db": 35.40523493009689,
+    "peak_near_center_um": 1.3631446087270105,
+    "n_peaks": 2,
+    "power_S31_at_wl0": 0.380074440160953,
+    "power_S41_at_wl0": 0.5757426395668702
+  }
+}

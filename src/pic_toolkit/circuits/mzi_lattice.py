@@ -386,7 +386,6 @@ def unitary_project(model_fn, port_names: tuple):
     wavelength sweep, vs. up to 1.26 unprojected). See
     `docs/simulation_settings_record.md`'s `circuits/mzi_lattice.py`
     (`unitary_project`) section for the full investigation."""
-    import numpy as np
 
     def wrapped(wl=1.35):
         s = model_fn(wl=wl)

@@ -18,10 +18,10 @@
   },
   "meep_resolution": 20,
   "meep_version": "1.34.0",
-  "creation_date": "2026-09-04",
+  "creation_date": "2026-09-26",
   "validation": {
     "energy_conservation": {
-      "max_deviation_port1": 0.0005076387909572766,
+      "max_deviation_port1": 0.0005076387909208613,
       "max_deviation_port2": 0.0005572376142795044,
       "max_deviation": 0.0005572376142795044,
       "max_loss_fraction_allowed": 0.0,
@@ -29,7 +29,7 @@
       "passed": true
     },
     "reciprocity": {
-      "max_diff_s12_s21": 2.5430741684297267e-05,
+      "max_diff_s12_s21": 2.543074170237535e-05,
       "max_diff_s11_s22": 3.379407853351439e-05,
       "max_diff": 3.379407853351439e-05,
       "tolerance": 0.01,

@@ -23,7 +23,7 @@
   },
   "meep_version": "1.34.0",
   "python_version": "3.10.20",
-  "creation_date": "2026-09-04",
+  "creation_date": "2026-09-26",
   "validation": {
     "energy_conservation": {
       "max_deviation_port1": 0.0004004636860726052,

@@ -58,7 +58,7 @@ any expensive or consequential step.
   sweeps: `04_bend_topology_optimization.ipynb` uses Meep's adjoint-based
   topology optimization (`autograd` + `nlopt`) to optimize a waveguide
   bend's geometry directly from a gradient of the simulated field.
-- **9 of 12 components are fully validated end-to-end** — cached ground-truth
+- **10 of 13 components are fully validated end-to-end** — cached ground-truth
   YAML *and* a Meep-free SAX model — not just a one-off simulation notebook;
   see the "cached model" column below.
 
@@ -71,6 +71,7 @@ any expensive or consequential step.
 | `03_mzi_arm.ipynb` | MZI delay arm (jog geometry) | ✅ |
 | `03b_mzi_arm_dense_sweep.ipynb` | Densified ΔL sweep for the delay arm | — (supporting sweep) |
 | `04_bend_topology_optimization.ipynb` | Adjoint topology optimization of a waveguide bend | ✅ |
+| `04b_bend_topopt_robust.ipynb` | Fabrication-bias-robust bend topology optimization (3-way eroded/nominal/dilated averaged objective) | ✅ |
 | `05_racetrack_resonator.ipynb` | Racetrack resonator | ✅ |
 | `06_directional_coupler.ipynb` | Directional coupler (baseline) | ✅ |
 | `06b_directional_coupler_gap_sweep.ipynb` | 2D gap × length sweep for the coupler | — (supporting sweep) |
@@ -97,7 +98,7 @@ See [circuits/README.md](circuits/README.md) for the full derivation.
 ## Repository structure
 
 ```
-notebooks/            Component-building notebooks (01-10, + 03b/06b)
+notebooks/            Component-building notebooks (01-10, + 03b/04b/06b)
 circuits/              SAX circuit-level compositions + GDS exports
 src/pic_toolkit/
   meep_sim/            Meep FDTD simulation modules (one per component)

@@ -3,11 +3,14 @@
 Circuit-level SAX simulations, composed from the cached, validated component
 models in `src/pic_toolkit/models/` (e.g. `waveguide`, `racetrack`).
 
-This directory never imports Meep and never triggers a new FDTD simulation —
-it only wires together component models that have already been characterized
-and cached under `data/sparams/` and `data/design_points/`.
+`wdm_sax.ipynb` and `wdm_mux4_sax.ipynb` never import Meep and never trigger
+a new FDTD simulation — they only wire together component models that have
+already been characterized and cached under `data/sparams/` and
+`data/design_points/`. `mzi_fabrication_tolerance_sax.ipynb` is the one
+exception (see below): it needs S-parameters at geometries that were never
+separately cached, so it deliberately runs fresh, coupler-only FDTD.
 
-Two notebooks, each following the same 7-section structure (Introduction →
+The two WDM notebooks follow the same 7-section structure (Introduction →
 analytical SAX model (N=2, N=4) → import S-parameters from FDTD simulation →
 circuit design with SAX+FDTD → comparison → GDS export → summary):
 
@@ -48,21 +51,21 @@ notebooks (`wdm_mux_mzi_lattice_sax.ipynb`, `mzi_real_fdtd_sax.ipynb`,
 `mux4_tree_n4_real_fdtd_sax.ipynb`, `mux4_tree_n4_sax.ipynb`), since
 consolidated into the two notebooks above.
 
-## Geometry-optimization effort (paused)
+- **`mzi_fabrication_tolerance_sax.ipynb`** — fabrication-tolerance study for
+  `notebooks/07_mzi.ipynb`'s single, already-selected passive MZI design
+  point (not the lattice/tree filters above). Waveguide width and coupler
+  gap are modeled as a single anti-correlated critical-dimension (CD) bias
+  `b` (`wg_width_um = nominal + b`, `gap_um = nominal - b`), not independent
+  variables, swept deterministically over `+-10nm` in `5nm` steps. Each
+  point composes the full MZI's response from a fresh, coupler-only FDTD run
+  (`meep_sim/coupler.py` — cheap, since `gap_um` never touches the delay
+  arm's own geometry) plus an MPB arm-dispersion solve, cascaded via
+  `sax.circuit()`; the arm's `n_eff` needs a small calibrated dispersion
+  correction (fit once against the nominal design's real full-MZI FDTD
+  result) to get the interference phase right — see
+  `docs/simulation_settings_record.md`'s `coupler.py` / `mzi.py` section for
+  why. This investigation also surfaced the same class of gap in
+  `models/waveguide.py`'s own reference-arm model (used by both notebooks
+  above); that gap has since been fixed with a real MPB-measured group
+  index — see the same doc's `circuits/mzi_lattice.py` section.
 
-A separate, later effort tried to close `wdm_sax.ipynb`'s ideal-vs-real gap
-by optimizing the N=4 lattice's arm and coupler lengths/gaps (JAX adjoint
-gradients, L-BFGS-B, a component-level dispersion diagnostic, and a greedy
-per-component redesign, across eleven exploratory notebooks). It is now
-paused with no optimized design adopted into production — both notebooks
-above still ship their original baseline geometry
-(`CHOSEN_LC=[26.0, 2.0, 18.0, 14.0]`, `gap_um=0.20`). See
-`docs/simulation_settings_record.md`'s "`circuits/` MUX2 (N=4 lattice)
-geometry-optimization program" section for the full findings (the coupler-3
-sign ceiling, the target-anchoring bug fixed twice, the best point-sampled
-result reached: 97.1% transmission / 0.71% crosstalk) before those
-notebooks were removed. The differentiable surrogate they used lives at
-`src/pic_toolkit/optimization/` in the working tree but is intentionally not
-part of this public repo (paused, exploratory), and the FDTD artifacts they
-produced remain cached under `data/sparams/{mzi_arm,coupler}/optimized/` —
-neither is referenced by `wdm_sax.ipynb`/`wdm_mux4_sax.ipynb`.

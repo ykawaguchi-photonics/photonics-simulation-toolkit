@@ -1,0 +1,43 @@
+{
+  "component": "mzi",
+  "study": "fabrication_tolerance",
+  "method": "sax_circuit_coupler_fdtd_plus_calibrated_arm_phase",
+  "wg_width_um": 0.5,
+  "gap_um": 0.2,
+  "bias_nm": 0.0,
+  "resolution": 50,
+  "calibration_a": -0.015568347487782954,
+  "calibration_b": -0.004363769906288735,
+  "coupler_validation": {
+    "energy_conservation": {
+      "max_deviation_in_top": 0.0,
+      "max_deviation_in_bot": 0.0,
+      "max_deviation": 0.0,
+      "max_expected_loss": 0.12,
+      "tolerance": 0.05,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_through": 2.2778722890137715e-06,
+      "max_diff_cross": 3.7872385627024663e-06,
+      "max_diff_reflect": 6.107496559317957e-08,
+      "max_diff": 3.7872385627024663e-06,
+      "tolerance": 0.08,
+      "passed": true
+    },
+    "passivity": {
+      "max_power_fraction": 0.6328611879214932,
+      "tolerance": 0.03,
+      "passed": true
+    },
+    "passed": true
+  },
+  "fringe_metrics": {
+    "fsr_um": 0.049061296268284815,
+    "extinction_db": 37.35196304321289,
+    "peak_near_center_um": 1.3611057252859873,
+    "n_peaks": 2
+  },
+  "meep_version": "1.34.0",
+  "creation_date": "2026-09-26"
+}

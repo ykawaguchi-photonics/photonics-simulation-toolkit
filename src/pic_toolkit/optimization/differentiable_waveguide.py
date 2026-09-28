@@ -1,8 +1,8 @@
 """JAX-differentiable twin of `pic_toolkit.models.waveguide.waveguide`.
 
 Architectural rule: this file NEVER imports meep. It reads the same cached
-`fitted_model` (n_eff) that `models/waveguide.py` reads, via the same design
-point, but reimplements the S-parameter formula with `jax.numpy` instead of
+`fitted_model` (n_eff, n_g) that `models/waveguide.py` reads, via the same
+design point, but reimplements the S-parameter formula with `jax.numpy` instead of
 plain `numpy` so `length_um` can be a JAX tracer -- this is what lets
 `jax.grad` differentiate the MUX2 objective with respect to `L_upper`
 (the reference arm's length). `models/waveguide.py` itself is not modified;
@@ -23,22 +23,27 @@ _DESIGN_POINT_PATH = _REPO_ROOT / "data" / "design_points" / "waveguide.yaml"
 _PORT_NAMES = ("o1", "o2")
 
 
-def _load_n_eff() -> float:
+def _load_dispersion() -> tuple[float, float, float]:
     design_point = design_points.load_design_point(_DESIGN_POINT_PATH)
-    return float(design_point["fitted_model"]["n_eff"])
+    fitted = design_point["fitted_model"]
+    return float(fitted["n_eff"]), float(fitted["n_g"]), float(fitted["lambda_um"])
 
 
-_N_EFF = _load_n_eff()
+_N_EFF0, _N_G0, _WL0 = _load_dispersion()
+_DN_DWL = (_N_EFF0 - _N_G0) / _WL0
 
 
 def waveguide_diff(wl, length_um) -> dict:
     """SAX model fn: wl (array-like, usually NOT traced), length_um (scalar,
     MAY be a JAX tracer -- this carries L_upper during optimization) -> SDict
     over (o1, o2). Exact formula mirror of `models.waveguide.waveguide`:
-    S21=S12=exp(2j*pi*n_eff*length_um/wl), S11=S22=0 (lossless, negligible
-    reflection -- same justification as the original)."""
+    S21=S12=exp(2j*pi*n_eff(wl)*length_um/wl), S11=S22=0 (lossless, negligible
+    reflection -- same justification as the original), with the same
+    linear-in-wavelength dispersion correction (`n_eff(wl) = n_eff0 +
+    (n_eff0-n_g0)/wl0*(wl-wl0)`) `models.waveguide.waveguide` applies."""
     wl = jnp.asarray(wl, dtype=jnp.float32)
-    phase = 2.0 * jnp.pi * _N_EFF * length_um / wl
+    n_eff = _N_EFF0 + _DN_DWL * (wl - _WL0)
+    phase = 2.0 * jnp.pi * n_eff * length_um / wl
     s21 = jnp.exp(1j * phase)
     zero = jnp.zeros_like(wl, dtype=jnp.complex64)
     o1, o2 = _PORT_NAMES
