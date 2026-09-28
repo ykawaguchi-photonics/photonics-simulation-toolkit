@@ -25,9 +25,8 @@ confinement).
 
 TE/TM correction (both this file and waveguide.py): every eigenmode
 source/monitor now passes `eig_parity=mp.TE` explicitly, forcing the
-genuinely-TE mode -- see docs/simulation_settings_record.md for the MPB
-investigation that found the previous `NO_PARITY` setting was silently
-simulating TM instead.
+genuinely-TE mode. The previous `NO_PARITY` setting let MPB pick whichever
+polarization has the higher effective index at band 1, which here is TM.
 
 `_make_simulation` captures both `mp.Ez` and `mp.Hz` DFT fields whenever
 `capture_dft=True`, and `_run_one_direction` picks whichever actually
@@ -83,8 +82,7 @@ def _quiet_meep():
 DEFAULT_PARAMS = {
     **GLOBAL_PARAMS,
     "resolution": 40,        # pixels/um -- finer than the toolkit-wide default (need to
-                              # resolve the arc); see docs/simulation_settings_record.md
-                              # for the resolution-convergence study behind this value.
+                              # resolve the arc), chosen from a resolution-convergence study.
     "radius_um": 2.0,        # bend (centerline) radius; 0 = sharp corner (native path only --
                               # gdsfactory's bend_circular/bend_euler both require radius > 0)
     "arm_length_um": 3.0,    # straight arm length from the corner/arc tangent point
@@ -141,8 +139,7 @@ def _domain(params: dict):
 
     NOTE: an earlier, off-origin tight-bounding-box version of this cell
     (shifting the cell via mp.Simulation's `geometry_center`) measurably
-    corrupted the S-parameters and was reverted -- see
-    docs/simulation_settings_record.md for the investigation.
+    corrupted the S-parameters and was reverted.
 
     FIX (implemented here, per the note above): instead of `geometry_center`,
     every ABSOLUTE coordinate (structure, ports, sources, monitors) is
@@ -403,8 +400,7 @@ def _reference_incident(params: dict, launch_from: str) -> np.ndarray:
     launch axis.
 
     Kept as a documented dead end -- NOT used by simulate_baseline (see its
-    docstring and docs/simulation_settings_record.md for why an independent
-    reference made results worse here, unlike racetrack.py's analogous use
+    docstring for why an independent reference made results worse here, unlike racetrack.py's analogous use
     of the same technique). `minimum_run_time=1000` is required for this
     function specifically: an unobstructed straight line decays too fast for
     Meep's default stopping criterion, giving non-physical coefficients if
@@ -596,7 +592,8 @@ def simulate_baseline(params: dict | None = None, use_native_geometry: bool = Fa
     Normalization: self-normalized against this SAME run's own in-situ
     "incident" coefficient at the source-side port -- an independently
     measured reference (_reference_incident) was tried and made results
-    worse; see docs/simulation_settings_record.md for the full comparison.
+    worse, because the port planes sit close enough to the bend that the
+    straight-guide reference does not match the in-situ incident field.
 
     use_native_geometry=False (default): geometry comes from build_gf_component
     (params["bend_type"]) via build_geometry_from_gds. use_native_geometry=True:

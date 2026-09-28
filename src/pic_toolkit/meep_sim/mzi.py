@@ -52,8 +52,7 @@ forced to `mp.TE` at the source and all four mode monitors (`_make_simulation`,
 `_run_one_excitation`), and the DFT field capture records whichever of `Ez`/`Hz` is
 actually dominant rather than assuming `Ez`. Unlike `coupler.py`, this module's own
 `coupling_length_um` default was already re-synced to match `coupler.py`'s
-already-TE-corrected value (13.848 um) -- see
-`docs/simulation_settings_record.md`'s `coupler.py`/`mzi.py` section -- so this fix
+already-TE-corrected value (13.848 um), so this fix
 does not change that constant; it corrects the polarization this module launches and
 measures with independently of it, which changes the DFT field snapshot's reported
 dominant component and this module's own measured energy/reciprocity residuals.
@@ -104,8 +103,7 @@ DEFAULT_PARAMS = {
     # DEFAULT_PARAMS / data/design_points/coupler.yaml (the validated 50:50
     # point from notebooks/06_directional_coupler.ipynb) -- both MZI stages
     # use this exact design, unmodified. Re-synced after coupler.py's own
-    # resolution=25->40 re-measurement (see docs/simulation_settings_record.md);
-    # 07_mzi.ipynb needs a re-run against this update.
+    # resolution=25->40 re-measurement.
     "coupling_length_um": 13.708639452498595,
     "gap_um": 0.2,
     "wg_width_um": 0.5,
@@ -134,8 +132,7 @@ DEFAULT_PARAMS = {
                                   # energy-conservation deviation 3.79%->0.0%, reciprocity ~17x
                                   # tighter (1.92%->0.11%), and a real passivity violation
                                   # (1.0231, needed a loosened 0.03 tolerance) disappearing
-                                  # entirely (0.991, comfortably under 1) -- see
-                                  # docs/simulation_settings_record.md for the full comparison.
+                                  # entirely (0.991, comfortably under 1).
                                   # resolution=25 is not adequate for this device's delay-arm
                                   # bump geometry.
     "dpml_um": 1.0,

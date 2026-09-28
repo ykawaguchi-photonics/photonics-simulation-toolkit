@@ -15,10 +15,10 @@ Si shrinks), and dilated (`eta_d`, Si grows) -- so the optimizer is pushed
 toward shapes whose transmission is stable across a small manufacturing
 bias, not just optimal at one exact boundary position. This is the standard
 "eroded/intermediate/dilated" robust-topology-optimization technique
-(Sigmund/Lazarov/Wang); see `docs/simulation_settings_record.md`'s
-`bend_topopt_robust.py` section for the calibration this module's `eta_e`/
-`eta_d` were measured against and the resulting fabrication-tolerance
-comparison against a fresh, non-Euler-warm-started baseline design.
+(Sigmund/Lazarov/Wang); see `04b_bend_topopt_robust.ipynb` for the
+calibration this module's `eta_e`/`eta_d` were measured against and the
+resulting fabrication-tolerance comparison against a fresh,
+non-Euler-warm-started baseline design.
 
 **Own, compact domain -- NOT `bend_topopt.py`'s.** An earlier revision of
 this module reused `bend_topopt.build_optimization_problem` unmodified
@@ -180,7 +180,6 @@ DEFAULT_PARAMS.update({
     "eta_e": None,                # erosion threshold (Si shrinks, NEGATIVE bias_um) -- None
                                   # until calibrated against target_bias_um via
                                   # find_eta_for_bias(); see the notebook's calibration section
-                                  # and docs/simulation_settings_record.md
     "eta_d": None,                # dilation threshold (Si grows, POSITIVE bias_um) -- same,
                                   # calibrated separately (target_bias_um negated)
     "target_bias_um": 0.010,      # +/-10nm fabrication bias eta_e/eta_d are calibrated to reach
@@ -200,8 +199,7 @@ DEFAULT_PARAMS.update({
                                   # high-Q resonant trap whose fields never satisfy
                                   # stop_when_dft_decayed()'s criterion; uncapped, one such
                                   # iteration ran 2+ hours at 100% CPU with zero progress and
-                                  # silently consumed a 3-hour headless notebook run (see
-                                  # docs/troubleshooting_log.md). Healthy runs on this domain
+                                  # silently consumed a 3-hour headless notebook run. Healthy runs on this domain
                                   # converge by t~200, and the cell's own one-way optical
                                   # transit is only ~24 meep time units, so 500 is ~2.5x normal
                                   # convergence / ~20 transits -- generous enough never to
@@ -673,7 +671,7 @@ def get_permittivity_map_compact(params: dict, weights=None) -> PermittivityMap:
 # ---------------------------------------------------------------------------
 # Corner-biased random initial density -- the 5-random-seed baseline search's
 # starting point (Section 5 of the notebook). NOT pure per-pixel i.i.d. noise:
-# measured directly (see docs/troubleshooting_log.md) that such noise
+# measured directly that such noise
 # collapses through mpa.conic_filter to a near-constant ~0.5 field (std drops
 # ~10x), then mpa.tanh_projection re-fragments that tiny residual into a
 # spatially-UNCORRELATED binary texture -- effectively as uninformative a
@@ -795,8 +793,7 @@ def _run_one_direction_compact(params: dict, weights, launch_from: str, capture_
         # effectively never satisfy the decay criterion, and with no cap
         # `stop_when_dft_decayed()` then runs forever (measured: one adjoint
         # iteration burned 2+ hours at 100% CPU with no progress, which is also
-        # what silently ate a 3-hour headless notebook run -- see
-        # docs/troubleshooting_log.md). A healthy run here converges by
+        # what silently ate a 3-hour headless notebook run). A healthy run here converges by
         # t~200 (verified: identical S-parameters at minimum_run_time 0/50/
         # 200/400), so this cap is ~5x normal and only ever bites a pathology.
         # If it does bite, the energy-conservation check will show it rather

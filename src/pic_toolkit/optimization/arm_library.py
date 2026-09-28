@@ -9,9 +9,8 @@ reads, but does NOT modify that file; this is a separate, differentiable
 consumer of the same on-disk data for the optimization layer only.
 
 Phase de-winding (why this is needed): the arm's S-parameter phase winds
-very fast with physical length (~640 deg/um, confirmed numerically -- see
-docs/simulation_settings_record.md-style investigation in the optimization
-plan) -- far too fast to `np.unwrap` naively across a sparse, irregularly
+very fast with physical length (~640 deg/um, confirmed numerically) -- far
+too fast to `np.unwrap` naively across a sparse, irregularly
 spaced length grid. Before unwrapping across the LENGTH axis, an analytic
 propagation trend (`k * 2*pi*n_eff*delta_L_um/wl`, k=1 for the through/cross
 terms S12/S21, k=2 for a round-trip guess on the reflection terms S11/S22)

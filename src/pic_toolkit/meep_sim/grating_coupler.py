@@ -34,16 +34,14 @@ not an oversight" status as every other module's own approximations -- see
 `waveguide.py`'s docstring for the precedent.
 
 NO `build_geometry_from_gds()` HERE -- the one place this module breaks the
-toolkit's GDSFactory-first pattern (see CLAUDE.md section 4). A GDS layer
+toolkit's GDSFactory-first pattern. A GDS layer
 only encodes an x-y footprint; it cannot represent this module's z-stack.
 The x-y layout (`grating_coupler_gds.py`, meep-free) is therefore a SEPARATE
 projection of the same design parameters, not a shared geometry source with
 this file -- it is a real tapeout export, never fed into this module's FDTD.
 
-TE/TM -- ROTATED-AXIS GOTCHA, EMPIRICALLY CONFIRMED (see
-docs/simulation_settings_record.md's `grating_coupler.py` section for the
-full measurement): in every OTHER module, `eig_parity=mp.TE` is the fix for
-the toolkit's well-known `NO_PARITY` bug (see CLAUDE.md section 5) because
+TE/TM -- ROTATED-AXIS GOTCHA, EMPIRICALLY CONFIRMED: in every OTHER module, `eig_parity=mp.TE` is the fix for
+the `NO_PARITY` pitfall (MPB otherwise selects TM at band 1) because
 their invariant Meep-z axis is physical z, and standard photonics "TE" (E
 confined to the wafer plane, i.e. no vertical E component) means Ez(Meep)=0,
 Meep's own definition of TE. HERE the invariant Meep-z axis is physical y
@@ -129,15 +127,12 @@ DEFAULT_PARAMS = {
                                     # on peak alone (etch_depth_um=0.16/duty_cycle=0.6) and
                                     # only afterward found that point's spectrum had a
                                     # near-zero null almost exactly at the O-band center and
-                                    # a high plateau confined to a narrow sub-band -- see
-                                    # docs/simulation_settings_record.md for the full
-                                    # comparison. This point's `energy_budget_check` PASSES
+                                    # a high plateau confined to a narrow sub-band. This point's `energy_budget_check` PASSES
                                     # (unlike the peak-selected point, which failed it) -- a
                                     # materially more usable design, not just a different
                                     # number. NOTE: `coupling_efficiency_overlap()` itself
                                     # was also fixed (a real power-normalization bug -- see
-                                    # that function's own docstring and
-                                    # docs/troubleshooting_log.md) after this point was first
+                                    # that function's own docstring) after this point was first
                                     # promoted; the 28.6%/40.7% figures here are the
                                     # corrected, re-measured values, not the original
                                     # (invalid, too-high) ones this point was first selected
@@ -151,7 +146,7 @@ DEFAULT_PARAMS = {
                                     # lands close to the O-band center (1.3475um of
                                     # 1.30-1.40um), so a follow-up period fine-sweep is lower
                                     # priority than it was for the earlier peak-only-selected
-                                    # point -- see docs/simulation_settings_record.md. Pass
+                                    # point. Pass
                                     # period_um=None to re-derive from scratch instead of
                                     # this promoted value.
     "duty_cycle": 0.4,              # PROMOTED alongside etch_depth_um above.
@@ -187,7 +182,8 @@ DEFAULT_PARAMS = {
                                     # the source and reflection monitor.
     "min_sim_time_factor": 2.0,    # minimum_run_time = this * core_index * cell_x --
                                     # same long-cell floor discipline as mzi.py/
-                                    # spiral_gds.py (CLAUDE.md section 7).
+                                    # spiral_gds.py (stop_when_dft_decayed() alone can
+                                    # stop before the pulse reaches a far monitor).
 }
 
 
@@ -444,9 +440,8 @@ def _make_simulation(params: dict, capture_dft: bool, capture_near_field: bool, 
         # docstring's TE/TM measurement), not Ez/Hz. Defaults to the O-band
         # CENTER frequency (fcen), but `field_freq` lets a caller request the
         # snapshot at any other frequency instead (e.g. a design's own
-        # peak-coupling-efficiency wavelength, which need not be fcen -- see
-        # docs/simulation_settings_record.md's note on the promoted point's
-        # sharply asymmetric spectrum).
+        # peak-coupling-efficiency wavelength, which need not be fcen, given
+        # the promoted point's sharply asymmetric spectrum).
         snap_freq = field_freq if field_freq is not None else fcen
         dft_obj = sim.add_dft_fields(
             [mp.Ez, mp.Hy], snap_freq, snap_freq, 1,
@@ -461,8 +456,7 @@ def _make_simulation(params: dict, capture_dft: bool, capture_near_field: bool, 
         # overlap()'s power-normalized reciprocity overlap (see that
         # function's docstring; Hx is the component paired with Ez in this
         # module's Poynting-flux formula, Sz_phys = Re(Ez*conj(Hx)) -- same
-        # mapping validated via the diagnostic Poynting-vector check recorded
-        # in docs/troubleshooting_log.md).
+        # mapping validated via a diagnostic Poynting-vector check).
         near_field_obj = sim.add_dft_fields(
             [mp.Ez, mp.Hx], fcen, fwidth, params["n_freq"],
             center=mp.Vector3(dom["x_grating_center"], dom["z_mon_up"]),
@@ -514,8 +508,8 @@ def coupling_efficiency_overlap(x_um: np.ndarray, e_sim: np.ndarray, hx_sim: np.
     c=1 unit convention (impedance of a medium of index n is 1/n).
 
     HANDEDNESS NOTE (the actual bug behind an earlier, nearly-silent
-    version of this fix that produced eta~=0 via near-total cancellation --
-    see docs/troubleshooting_log.md): this module's own stated axis mapping,
+    version of this fix that produced eta~=0 via near-total cancellation):
+    this module's own stated axis mapping,
     "Meep's invariant z axis represents physical y" (module docstring),
     swaps exactly two axes (Meep_y<->phys_z, Meep_z<->phys_y) relative to
     Meep's x. A single-axis-pair swap of a right-handed frame is
@@ -543,8 +537,7 @@ def coupling_efficiency_overlap(x_um: np.ndarray, e_sim: np.ndarray, hx_sim: np.
     prior promoted design's own peak wavelength (coupling_efficiency=77%
     vs. upward_power=38% -- physically impossible, since coupling_efficiency
     can be at most the fraction of incident power that reaches the near-
-    field plane at all). See docs/troubleshooting_log.md for the full
-    diagnostic (Poynting-flux height-invariance check ruling out evanescent
+    field plane at all). The diagnostic (Poynting-flux height-invariance check ruling out evanescent
     contamination, then a restricted-fiber-window sensitivity test that
     still exceeded `upward_power` regardless of window choice, isolating the
     bug to the normalization itself, not the fiber-position assumption).
@@ -555,7 +548,7 @@ def coupling_efficiency_overlap(x_um: np.ndarray, e_sim: np.ndarray, hx_sim: np.
     The fiber's assumed lateral position `x0_um` is still the intensity-
     weighted centroid of |E_sim|^2 along the monitor line (unchanged from
     the prior version -- a separate, already-documented idealization, not
-    what this fix addresses; see docs/simulation_settings_record.md)."""
+    what this fix addresses)."""
     ey_sim = -e_sim  # physical Ey -- see HANDEDNESS NOTE above
     intensity = np.abs(e_sim) ** 2
     x0_um = np.sum(x_um * intensity) / np.sum(intensity)
@@ -577,8 +570,7 @@ def sweep_etch_duty(base_params: dict, etch_depth_values, duty_cycle_values) -> 
     AND its MEAN coupling_efficiency across that same band -- a point with a
     high peak can still have a near-zero response over most of the band (a
     sharply asymmetric spectrum with the peak concentrated in a narrow
-    sub-band, empirically observed for at least one promoted point -- see
-    docs/simulation_settings_record.md), so `coupling_efficiency_mean` is the
+    sub-band, empirically observed for at least one promoted point), so `coupling_efficiency_mean` is the
     more honest "how good is this design across the WHOLE O-band" metric,
     while `coupling_efficiency_max` stays useful context (achievable ceiling,
     if the band were re-centered via a period fine-sweep). This does NOT
@@ -675,7 +667,7 @@ def simulate_baseline(params: dict | None = None, field_snapshot_wl_um: float | 
     wavelength instead of the O-band center (the default) -- useful for
     inspecting the field at a design's own peak-coupling-efficiency
     wavelength, which is not necessarily the band center (see module
-    docstring / docs/simulation_settings_record.md)."""
+    docstring)."""
     dom_params = {**DEFAULT_PARAMS, **(params or {})}
     resolved_period = dom_params["period_um"] if dom_params["period_um"] is not None else derive_grating_period(dom_params)
     resolved = {**dom_params, "period_um": resolved_period}
@@ -758,8 +750,7 @@ def simulate_fiber_incidence(params: dict | None = None, wl_um: float | None = N
     its center. Aiming the incident beam's edge (not its center) at
     `x_grating_start` keeps the beam's illuminated footprint over that same
     high-sensitivity region instead of mostly overshooting it toward +x (an
-    earlier, geometric-center-aimed version measurably under-coupled -- see
-    docs/troubleshooting_log.md)."""
+    earlier, geometric-center-aimed version measurably under-coupled)."""
     dom_params = {**DEFAULT_PARAMS, **(params or {})}
     resolved_period = dom_params["period_um"] if dom_params["period_um"] is not None else derive_grating_period(dom_params)
     resolved = {**dom_params, "period_um": resolved_period}

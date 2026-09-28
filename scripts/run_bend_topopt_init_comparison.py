@@ -21,7 +21,8 @@ question for this study, not an afterthought.
 
 Each configuration is saved to its own `.npz` as soon as it finishes, and
 existing files are skipped, so a crash/timeout costs at most the run in
-flight (see docs/troubleshooting_log.md for why that matters here).
+flight -- individual adjoint runs here are long enough that losing a whole
+batch to one interruption is expensive.
 
 Usage (repo root, mp env interpreter directly -- `conda run` buffers output):
     /path/to/envs/mp/bin/python -u scripts/run_bend_topopt_init_comparison.py A
@@ -189,8 +190,7 @@ def main(experiment: str) -> None:
         for res in (30, 40):
             run_one("corner", 4.5, res, seed=0, grid_n=181)
     elif experiment == "D":
-        # Minimum-length-scale penalty. Measured first (see
-        # docs/simulation_settings_record.md): at the tutorial's own setting
+        # Minimum-length-scale penalty. Measured first: at the tutorial's own setting
         # (minimum length == filter radius, penalty_eta_e=0.75) our designs
         # already comply by ~15 orders of magnitude -- the conic filter alone
         # satisfies it, so the penalty is inert there and optimizing with it

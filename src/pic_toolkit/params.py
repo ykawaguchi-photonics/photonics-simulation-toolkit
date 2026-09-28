@@ -15,8 +15,7 @@ from __future__ import annotations
 GLOBAL_PARAMS = {
     "wg_width_um": 0.5,     # waveguide core width -- matches racetrack.py/coupler.py/
                             # mzi.py/bend_topopt.py's own standalone DEFAULT_PARAMS
-                            # (see docs/simulation_settings_record.md's width-
-                            # unification note for why 0.5 was picked over 0.45)
+                            # (0.5 rather than 0.45, unified across components)
     "core_index": 2.7,      # 2D effective index (TE), NOT bulk silicon (~3.45)
     "clad_index": 1.44,     # silicon dioxide
     "polarization": "TE",

@@ -10,9 +10,9 @@ is approximated by a single dielectric slab of constant index. That's a
 deliberate Phase-1 simplification, not an oversight.
 
 TE/TM correction: every eigenmode source/monitor now passes
-`eig_parity=mp.TE` explicitly, forcing the genuinely-TE mode (see
-docs/simulation_settings_record.md for the investigation that found
-`NO_PARITY` was silently simulating TM). Both Ez and Hz DFT fields are
+`eig_parity=mp.TE` explicitly, forcing the genuinely-TE mode (`NO_PARITY`
+lets MPB pick whichever polarization has the higher effective index at
+band 1, which for this cross-section is TM). Both Ez and Hz DFT fields are
 captured for the field snapshot; expect Hz to dominate now that TE is
 genuinely forced.
 

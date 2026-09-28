@@ -52,7 +52,8 @@ validation:
 rationale: Selected coupling_length_um=4.0 (gap_um fixed at 0.2) from a 5-point search
   ([1.0, 2.0, 3.0, 4.0, 5.0]) as the point maximizing through-port on-resonance extinction
   (equivalently, maximizing drop-port on-resonance transfer) -- see Section 9's trend
-  plot. A gap search was tried first and abandoned -- see docs/simulation_settings_record.md.
+  plot. coupling_length_um, not gap_um, is the swept knob here, since a gap sweep grows
+  resolution-sensitive as the gap shrinks.
 fitted_model:
   radius_um: 5.0
   coupling_length_um: 4.0
@@ -70,7 +71,6 @@ fitted_model:
     of which direction the seed asymmetry favored. RMS residual is roughly half the
     kappa1=kappa2-constrained fit's residual on the same narrowband data, confirming
     a real, physically plausible difference between the two nominally-identical couplers
-    -- see docs/simulation_settings_record.md for the full record, including the mode-number
-    ambiguity (residual differences across neighboring candidate mode numbers were
+    -- including the mode-number ambiguity (residual differences across neighboring candidate mode numbers were
     <0.001%, so the seeded mode number was kept over a marginally-lower-residual alternative).
   fit_residual_rms: 0.008117011188260482

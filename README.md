@@ -13,14 +13,6 @@ pre-characterized model — and that measured physics (amplitude *and* phase)
 is carried all the way through to circuit-level composition and a
 fabricable GDS layout.
 
-Built through iterative pair-programming with
-[Claude Code](https://claude.com/claude-code); every physical model,
-tolerance, and validation judgment in this repo was made and independently
-verified by me — see [CLAUDE.md](CLAUDE.md) for the conventions that keep
-that collaboration disciplined, and
-[docs/troubleshooting_log.md](docs/troubleshooting_log.md) for the actual
-diagnostic record.
-
 ## The pipeline
 
 1. **`notebooks/0N_*.ipynb`** — one notebook per PIC component. Builds the
@@ -108,10 +100,7 @@ src/pic_toolkit/
 data/
   design_points/        Per-component YAML — the source of truth
   sparams/               Cached S-parameter artifacts (.npz + .json) per component
-docs/
-  simulation_settings_record.md   Parameter/tolerance rationale per component
-  troubleshooting_log.md          Process/workflow issues and fixes
-scripts/               One-off sweep runner scripts
+scripts/               One-off sweep and study runner scripts
 ```
 
 ## Setup
@@ -133,10 +122,7 @@ jupyter lab notebooks/
 
 Notebooks are meant to be run cell-by-cell, not with "Run All" — each has
 explicit **STOP** checkpoints before any expensive FDTD run or before saving
-a new design point. See [CLAUDE.md](CLAUDE.md) for the full set of
-conventions (notebook structure, shared plotting style, geometry-construction
-pattern, and known simulation gotchas) before editing any notebook or
-`src/pic_toolkit/meep_sim/*.py` module.
+a new design point.
 
 ## Tech stack
 
@@ -161,12 +147,17 @@ These are deliberate, stated Phase-1 simplifications, not oversights — see
 each component's own module docstring (`src/pic_toolkit/meep_sim/*.py`) for
 where a specific approximation (a phenomenological loss knob, a Gaussian
 fiber-mode model, a coupled-mode-theory fit, etc.) stands in for first-
-principles physics, and `docs/simulation_settings_record.md` for the
-empirical basis behind each one.
+principles physics.
 
 ## More documentation
 
-- [CLAUDE.md](CLAUDE.md) — repo conventions for notebooks and simulation modules
-- [docs/simulation_settings_record.md](docs/simulation_settings_record.md) — why each non-obvious parameter/tolerance is what it is
-- [docs/troubleshooting_log.md](docs/troubleshooting_log.md) — process/workflow issues hit during development
 - [circuits/README.md](circuits/README.md) — circuit-level composition details
+
+## Author
+
+Designed, implemented, and validated by Yuma Kawaguchi — component physics,
+simulation settings and convergence studies, tolerance choices, and
+circuit-level design decisions.
+
+Development used [Claude Code](https://claude.com/claude-code) as a coding
+assistant for implementation and refactoring.

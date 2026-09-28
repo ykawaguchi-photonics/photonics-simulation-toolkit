@@ -62,7 +62,7 @@ this module: an erf-ramped index perturbation applied to whichever geometry
 to ~0 well before either coupler stage.
 
 **TE/TM**: `eig_parity=mp.TE` is forced at every source/monitor, following
-`coupler.py`'s already-correct convention (CLAUDE.md Sec. 5) -- `mzi.py`
+`coupler.py`'s already-correct convention -- `mzi.py`
 still uses `mp.NO_PARITY` as an un-migrated legacy default; this module,
 being new, does not inherit that.
 

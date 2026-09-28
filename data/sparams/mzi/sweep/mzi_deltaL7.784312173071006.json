@@ -31,7 +31,7 @@
   },
   "meep_version": "1.34.0",
   "creation_date": "2026-09-05",
-  "note": "Second new point for the Mux4 tree circuit's stage2_up, superseding the first (delta_L=7.6401287, the ideal-linear-model quarter-wave estimate, which measured only +44.36deg of real S41 phase difference vs stage2_down's delta_L=7.5 -- half the intended +90deg). This point's delta_L = 7.5 + (pi/2)/5.5249um, calibrated from that first pair's OWN measured local phase-vs-length slope (5.5249 rad/um), not the ideal n_eff0-based linear formula -- see src/pic_toolkit/circuits/mux4_tree.py and docs/simulation_settings_record.md.",
+  "note": "Second new point for the Mux4 tree circuit's stage2_up, superseding the first (delta_L=7.6401287, the ideal-linear-model quarter-wave estimate, which measured only +44.36deg of real S41 phase difference vs stage2_down's delta_L=7.5 -- half the intended +90deg). This point's delta_L = 7.5 + (pi/2)/5.5249um, calibrated from that first pair's OWN measured local phase-vs-length slope (5.5249 rad/um), not the ideal n_eff0-based linear formula -- see src/pic_toolkit/circuits/mux4_tree.py.",
   "port_names": [
     "in_top",
     "in_bot",

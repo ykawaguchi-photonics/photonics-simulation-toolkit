@@ -43,7 +43,7 @@
     },
     "passed": true
   },
-  "rationale": "This notebook's own resolution=50 copy of the nominal design's full-MZI FDTD result, matching the resolution used for every swept coupler point below (see docs/simulation_settings_record.md). Deliberately kept separate from data/sparams/mzi/selected/mzi_selected (resolution=40), which 07_mzi.ipynb and other notebooks still depend on unchanged.",
+  "rationale": "This notebook's own resolution=50 copy of the nominal design's full-MZI FDTD result, matching the resolution used for every swept coupler point below. Deliberately kept separate from data/sparams/mzi/selected/mzi_selected (resolution=40), which 07_mzi.ipynb and other notebooks still depend on unchanged.",
   "port_names": [
     "in_top",
     "in_bot",

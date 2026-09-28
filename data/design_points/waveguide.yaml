@@ -11,7 +11,7 @@ fitted_model:
   n_g_direct: 2.927636136814265
   n_g_finite_diff: 2.9276220502021704
   lambda_um: 1.35
-  fit_method: length-sweep cutback (phase slope vs L; lossless model, see docs/simulation_settings_record.md)
+  fit_method: length-sweep cutback (phase slope vs L; lossless model)
   n_g_fit_method: MPB eigenmode dispersion solve (Section 5.2), same technique as
     meep_sim.mzi.compute_arm_dispersion -- n_g is the MPB group-velocity estimate,
     cross-checked against a finite-difference estimate from the same n_eff(wavelength)

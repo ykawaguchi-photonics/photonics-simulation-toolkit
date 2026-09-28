@@ -45,7 +45,7 @@ validation:
   passed: true
 rationale: Adjoint-optimized over 80 NLopt MMA iterations on a compact 2.5x2.5um design
   region, from a corner-biased random initial density (seed=0) -- NOT a uniform-gray
-  start (measured to fail here, see docs/troubleshooting_log.md) and NOT an Euler-curve
+  start (measured to fail here) and NOT an Euler-curve
   warm start (which was used in an earlier revision of this notebook but found to
   understate what topology optimization can do, by refining an already-smooth curve
   rather than discovering structure). This footprint was chosen from a measured region-size

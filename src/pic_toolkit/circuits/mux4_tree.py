@@ -100,7 +100,7 @@ def build_ideal_mux4_tree_circuit(
     (`kappas=[0.5,0.5], signs=[1,1]` -- an ordinary 50:50 MZI, no lattice synthesis
     needed); `n_couplers=4` instead uses `ml.synthesize_maximally_flat_kappas(4)`'s
     halfband design at every one of the 3 stages -- a flatter per-stage passband,
-    quantitatively confirmed (see `docs/simulation_settings_record.md`) to be
+    quantitatively confirmed to be
     substantially MORE ROBUST to a `stage2_up` phase-calibration error than the plain
     N=2 stage (e.g. an 8.86deg residual error costs N=2 ~12dB of worst-channel
     extinction but only ~22dB for N=4). `stage2_up` gets `quarter_wave_length_um`

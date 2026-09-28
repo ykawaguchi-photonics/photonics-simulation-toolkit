@@ -42,8 +42,8 @@ here too):** `eig_parity` is now forced to `mp.TE` everywhere a mode is
 launched or decomposed (`_make_simulation`, `_run_one_direction`, and the
 adjoint source/objective in `build_optimization_problem`), and the DFT
 field capture records whichever of Ez/Hz is actually dominant rather than
-assuming Ez. See docs/simulation_settings_record.md for the MPB
-investigation behind this fix.
+assuming Ez. (`NO_PARITY` lets MPB pick whichever polarization has the
+higher effective index at band 1, which for this cross-section is TM.)
 """
 
 from __future__ import annotations
@@ -119,9 +119,8 @@ DEFAULT_PARAMS = {
     "beta_schedule": [4.0, 8.0, 16.0, 32.0],  # tanh-projection sharpness, run in
                                   # increasing stages (beta continuation) -- starting soft
                                   # and progressively forcing binarization stabilizes
-                                  # convergence; see docs/simulation_settings_record.md
-                                  # for why (and for the resulting per-stage objective
-                                  # dips visible in Section 6's convergence plot).
+                                  # convergence (each beta step causes the per-stage
+                                  # objective dips visible in Section 6's convergence plot).
     "iters_per_stage": 20,       # NLopt MMA evaluations per beta stage -> 80 total.
     "adjoint_minimum_run_time": 50,  # floor on each forward/adjoint FDTD run's length
                                   # (meep time units), passed to OptimizationProblem --

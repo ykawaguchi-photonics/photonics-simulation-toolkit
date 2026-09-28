@@ -84,9 +84,9 @@ DEFAULT_PARAMS = {
                                   # wl0_um=1.35) -- 06_directional_coupler.ipynb's Section 10
                                   # sweep + Section 11 interpolation is what actually
                                   # (re)discovers and saves the precise 50:50 value to
-                                  # data/design_points/coupler.yaml; see
-                                  # docs/simulation_settings_record.md for the TE/TM
-                                  # mode-mislabeling bug this value was re-measured after.
+                                  # data/design_points/coupler.yaml. Re-measured after
+                                  # eig_parity was forced to mp.TE (NO_PARITY had
+                                  # selected TM).
     "gap_um": 0.2,                # coupling-region edge-to-edge gap. Matches racetrack.py's
                                   # already-validated choice at this same resolution=25 (5 grid
                                   # points across the gap), rather than the MZM reference
@@ -95,8 +95,7 @@ DEFAULT_PARAMS = {
                                   # racetrack.py's (and the since-removed ring.py's) small-gap
                                   # resolution/reciprocity wall.
     "wg_width_um": 0.5,           # matches every other pic_toolkit component -- the toolkit
-                                  # standardized on 0.5 (see docs/simulation_settings_record.md's
-                                  # width-unification note; waveguide.py/bend.py/grating_coupler.py
+                                  # standardized on 0.5 (waveguide.py/bend.py/grating_coupler.py
                                   # inherit this same value from params.GLOBAL_PARAMS).
     "wg_height_um": 0.22,         # vertical thickness of the real 3D device this 2D model
                                   # approximates -- metadata only, same convention as every
@@ -138,8 +137,8 @@ DEFAULT_PARAMS = {
                                   # reuses this module's own coupling_length_um/geometry) showed
                                   # a dramatic, not sub-1%, difference under genuine TE physics
                                   # (energy-conservation deviation 3.79%->0.0%, reciprocity 17x
-                                  # tighter, a real passivity violation disappearing entirely) --
-                                  # see docs/simulation_settings_record.md. The old "sub-1%"
+                                  # tighter, a real passivity violation disappearing entirely).
+                                  # The old "sub-1%"
                                   # confirmation was made under the pre-fix (effectively TM)
                                   # physics and does not hold under TE.
     "dpml_um": 1.0,
@@ -176,8 +175,8 @@ class CouplerResult:
     T_cross_bot: np.ndarray     # excite in_bot -> |S(out_top<-in_bot)|^2
     R_reflect_bot: np.ndarray   # excite in_bot -> |S(in_bot<-in_bot)|^2
     # Complex counterparts of the 6 power fields above (same excite/measure pairing,
-    # just kept as the genuine complex ratio instead of |.|^2) -- see CLAUDE.md Sec 7's
-    # "persist complex S-parameters, not just power" note for why these were added.
+    # just kept as the genuine complex ratio instead of |.|^2) -- persisted so a
+    # downstream interferometric circuit (e.g. an MZI in SAX) can use the measured phase.
     # T_* above are exactly np.abs(S_*)**2, so both stay numerically consistent by
     # construction.
     S_through: np.ndarray = None
@@ -624,8 +623,8 @@ def save_artifact(path_stem, result: CouplerResult, metadata: dict) -> None:
     around it. Same .npz (arrays) + .json (metadata) sidecar-pair convention.
 
     Saves both the power fields (T_*, kept for backward compatibility -- exactly
-    np.abs(S_*)**2) and the complex S_* fields (magnitude AND phase -- see
-    CLAUDE.md Sec 7's "persist complex S-parameters" note for why these exist).
+    np.abs(S_*)**2) and the complex S_* fields (magnitude AND phase, needed for
+    interferometric circuit composition downstream).
     """
     path_stem = Path(path_stem)
     path_stem.parent.mkdir(parents=True, exist_ok=True)

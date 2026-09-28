@@ -53,9 +53,7 @@ critical-coupling gap apparently sits below 0.15um, in the same territory
 `racetrack.py`'s own predecessor (`ring.py`, since removed) already
 documented hitting a wall on. A gap sweep also makes the measured
 S-parameters progressively more sensitive to grid resolution as the gap
-shrinks; `coupling_length_um` avoids that entirely (see
-`docs/simulation_settings_record.md`'s `add_drop_ring.py` section for the
-full record of both sweeps).
+shrinks; `coupling_length_um` avoids that entirely.
 """
 
 from __future__ import annotations
@@ -185,8 +183,7 @@ def _compute_domain(params: dict) -> dict:
     outer edges (racetrack.py only ever needed this on one side -- the far
     side there was empty cladding out to the PML). Sized generously here
     (confirmed/tightened empirically via the notebook's Section 4
-    permittivity-map inspection, per CLAUDE.md's "measure first" tolerance
-    discipline) rather than derived to the exact minimum.
+    permittivity-map inspection) rather than derived to the exact minimum.
     """
     radius = params["radius_um"]
     gap = params["gap_um"]
@@ -788,8 +785,8 @@ def run_all_checks(result: AddDropRingResult, off_resonance_tol: float = 0.02, m
 # Own local artifact I/O -- pic_toolkit.sparams is hardcoded to a 2x2
 # S-matrix, so (per coupler.py/mzm.py's precedent) this module keeps its own
 # .npz+.json pair. ALL 8 complex arrays are saved as raw complex128 (phase
-# preserved natively, per CLAUDE.md's "persist complex S-parameters, not
-# just power" rule).
+# preserved natively, not reduced to power, so downstream interferometric
+# circuit composition can use the measured phase).
 # ---------------------------------------------------------------------------
 _ARRAY_FIELDS = (
     "S_input_refl", "S_input_through", "S_input_drop", "S_input_add",

@@ -8,8 +8,7 @@ minibatch/measurement noise anywhere) is exactly the regime quasi-Newton
 methods are built for, and an earlier 1000-iteration Adam run on this same
 objective showed "a slow, genuine residual drift... a shallow-landscape
 effect" late in the run -- the kind of slow terminal convergence L-BFGS's
-curvature estimate is designed to fix (see `docs/simulation_settings_record.md`'s
-"`circuits/` MUX2 (N=4 lattice) geometry-optimization program" section).
+curvature estimate is designed to fix.
 
 Uses `scipy.optimize.minimize(method="L-BFGS-B")` (scipy is already a
 dependency via `scipy.signal.find_peaks` elsewhere in this optimization

@@ -47,15 +47,12 @@ def waveguide(wl=1.35, length_um: float | None = None):
     (26um/16um) reference arm, where the interference phase is sensitive
     enough to dispersion that the group index genuinely matters -- see
     `notebooks/01_waveguide_baseline.ipynb` Section 5.2 for how `n_g` was
-    measured (MPB dispersion solve) and
-    `docs/simulation_settings_record.md`'s `circuits/mzi_lattice.py` section
-    for the investigation that found the original gap.
+    measured (MPB dispersion solve).
 
     The cutback sweep's amplitude channel measures FDTD's own noise floor
     here, not a real propagation loss (this cross-section has no absorption
     mechanism); a meaningful loss number needs a lossy material model
-    instead (see `racetrack.py`'s conductivity trick, and
-    docs/simulation_settings_record.md). S11/S22 are modeled as exactly zero
+    instead (see `racetrack.py`'s conductivity trick). S11/S22 are modeled as exactly zero
     (a well-designed straight waveguide's reflection is negligible,
     confirmed by notebooks/01_waveguide_baseline.ipynb's passivity/energy-
     conservation checks on the raw FDTD data).

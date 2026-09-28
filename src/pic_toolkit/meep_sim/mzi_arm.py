@@ -34,7 +34,7 @@ notebook's `delta_L_um=15.0` target, reached with `extra_straight_um~=0.863`.
 
 Simulation model: 2D effective-index cross-section, same convention as
 `bend.py`/`waveguide.py` (TE, `eig_parity=mp.TE` forced explicitly at every
-source/monitor per `CLAUDE.md` Sec 5). Only this file (plus `waveguide.py`,
+source/monitor, since `NO_PARITY` would select TM here). Only this file (plus `waveguide.py`,
 `bend.py`, `bend_topopt.py`, `racetrack.py`, `coupler.py`, `mzi.py`,
 `spiral.py`, `spiral_gds.py`, `gds_import.py`) imports meep.
 """
@@ -158,8 +158,7 @@ def _build_raw_gf_component(params: dict):
     origin, shape extending mostly toward +y) -- NOT yet centered; see
     build_gf_component for the centering step (same 2-stage pattern as
     bend.py's own build_gf_component, for the same documented reason:
-    mp.Simulation's geometry_center measurably corrupts S-parameters, see
-    docs/simulation_settings_record.md)."""
+    mp.Simulation's geometry_center measurably corrupts S-parameters)."""
     import gdsfactory as gf
 
     bend, xs = _one_bend(params)

@@ -49,9 +49,8 @@ def _interp_complex(wl, wl_grid, s_grid):
     # component into circuits/mzi_real_fdtd_sax.ipynb's SAX circuit with the
     # old real/imag interpolation produced a spurious total-power deficit up
     # to ~40%, oscillating with exactly this artifact's own 5nm grid spacing;
-    # switching to magnitude+phase interpolation removed it entirely (see
-    # docs/simulation_settings_record.md's mzi_arm section for the isolation
-    # steps). Magnitude and phase both vary smoothly and slowly by comparison
+    # switching to magnitude+phase interpolation removed it entirely.
+    # Magnitude and phase both vary smoothly and slowly by comparison
     # (no wrapping issue for magnitude; phase is unwrapped before
     # interpolating), so this is safe even at large per-step phase changes.
     wl = np.asarray(wl, dtype=float)

@@ -1,11 +1,9 @@
 #!/bin/bash
 # One-time overnight run of notebooks/06_mzi.ipynb's full delta_L sweep (Section 10),
-# fired by a single crontab entry (see the plan this script was written from). Bundles
-# cd + the real command into one self-contained invocation -- a background nbconvert
-# call whose cd only "stuck" for that one process, while the interactive shell's own
-# cwd silently reverted for the next command, has bitten this exact notebook before
-# (docs/troubleshooting_log.md) -- so this script never assumes any inherited shell
-# state.
+# fired by a single crontab entry. Bundles cd + the real command into one
+# self-contained invocation -- a background process's working directory is not
+# guaranteed to match the interactive shell's -- so this script never assumes any
+# inherited shell state.
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

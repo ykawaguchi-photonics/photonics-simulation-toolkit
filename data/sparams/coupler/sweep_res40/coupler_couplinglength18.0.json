@@ -27,7 +27,7 @@
   },
   "meep_version": "1.34.0",
   "creation_date": "2026-09-16",
-  "note": "resolution=40 re-measurement, see docs/simulation_settings_record.md",
+  "note": "resolution=40 re-measurement",
   "port_names": [
     "in_top",
     "in_bot",

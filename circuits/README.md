@@ -42,15 +42,6 @@ circuit design with SAX+FDTD → comparison → GDS export → summary):
   `gf.routing.route_single_sbend` to connect `stage1`'s two outputs to the
   two downstream lattice devices.
 
-See `docs/simulation_settings_record.md` for the full derivation and
-measurement history behind both notebooks (why N=4 was chosen for the tree's
-physical layout, the real delay-arm phase-calibration investigation, etc.) —
-that investigation was originally spread across several intermediate
-notebooks (`wdm_mux_mzi_lattice_sax.ipynb`, `mzi_real_fdtd_sax.ipynb`,
-`wdm_mux4_tree_sax.ipynb`, `mux4_tree_real_fdtd_sax.ipynb`,
-`mux4_tree_n4_real_fdtd_sax.ipynb`, `mux4_tree_n4_sax.ipynb`), since
-consolidated into the two notebooks above.
-
 - **`mzi_fabrication_tolerance_sax.ipynb`** — fabrication-tolerance study for
   `notebooks/07_mzi.ipynb`'s single, already-selected passive MZI design
   point (not the lattice/tree filters above). Waveguide width and coupler
@@ -62,10 +53,10 @@ consolidated into the two notebooks above.
   arm's own geometry) plus an MPB arm-dispersion solve, cascaded via
   `sax.circuit()`; the arm's `n_eff` needs a small calibrated dispersion
   correction (fit once against the nominal design's real full-MZI FDTD
-  result) to get the interference phase right — see
-  `docs/simulation_settings_record.md`'s `coupler.py` / `mzi.py` section for
-  why. This investigation also surfaced the same class of gap in
+  result) to get the interference phase right, because the 2D
+  effective-index arm model alone does not capture the arm's full
+  dispersion. This investigation also surfaced the same class of gap in
   `models/waveguide.py`'s own reference-arm model (used by both notebooks
   above); that gap has since been fixed with a real MPB-measured group
-  index — see the same doc's `circuits/mzi_lattice.py` section.
+  index (see `models/waveguide.py`).
 

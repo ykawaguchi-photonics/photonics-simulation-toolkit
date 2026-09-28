@@ -17,8 +17,7 @@ established relative to the since-removed ring.py.
 Returns genuine COMPLEX (magnitude and phase) S-parameters, from the
 artifact's S_through/S_cross/S_reflect (+_bot) fields -- meep_sim.coupler.py
 was extended to capture and persist these (previously it only kept
-np.abs(...)**2, discarding phase before it ever reached the artifact; see
-CLAUDE.md Sec 7's "persist complex S-parameters" note). This closes the gap
+np.abs(...)**2, discarding phase before it ever reached the artifact). This closes the gap
 this module's own docstring used to flag: a power-only coupler model cannot
 drive a genuinely interferometric MZI circuit, which depends on the
 coupler's own through/cross phase relationship, not just its power split.

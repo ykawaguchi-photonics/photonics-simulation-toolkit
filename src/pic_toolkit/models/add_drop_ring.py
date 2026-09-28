@@ -9,9 +9,8 @@ single-coupler all-pass formula to two independent coupling coefficients,
 `kappa1` (input-bus coupler) and `kappa2` (add/drop-bus coupler), fit by a
 multi-started nonlinear `scipy.optimize.curve_fit` to a single, finely
 resolved resonance (NOT a closed-form solve, and NOT the full baseline
-band -- see `10_add_drop_ring_resonator.ipynb`'s Section 12 and
-`docs/simulation_settings_record.md` for why a global full-band fit was
-tried and abandoned).
+band -- see `10_add_drop_ring_resonator.ipynb`'s Section 12 for why a
+single-resonance fit is used rather than a global full-band fit).
 
 `t1 = sqrt(1-kappa1**2)`, `t2 = sqrt(1-kappa2**2)` (each coupler's own
 lossless self-coupling amplitude), `a = exp(-alpha*L/2)` (round-trip

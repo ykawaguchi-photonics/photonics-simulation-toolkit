@@ -64,9 +64,7 @@ Synthesis, once the target is right, reuses the SAME machinery either way:
 
 The whole synthesis is verified, not just trusted: reconstructing `(A,B)`
 forward from the peeled `(kappa_i, sign_i)` sequence must reproduce the
-target to near machine precision, checked every call. See
-`docs/simulation_settings_record.md`'s `circuits/mzi_lattice.py` section for
-the full derivation history (including the binomial-target dead end above).
+target to near machine precision, checked every call.
 
 This module never imports meep.
 """
@@ -281,7 +279,7 @@ def synthesize_maximally_flat_kappas(n_couplers: int) -> tuple[list[float], list
     sequence must reproduce the target to near machine precision, or this
     raises -- a synthesis bug fails loudly rather than silently returning a
     wrong design (same discipline as this repo's other tolerance/validation
-    checks, see CLAUDE.md Sec 6)."""
+    checks)."""
     if n_couplers < 2:
         raise ValueError(f"n_couplers must be >= 2, got {n_couplers}")
     m = n_couplers - 1
@@ -383,9 +381,7 @@ def unitary_project(model_fn, port_names: tuple):
     largest individual imperfection, ~6% reflection) already fixed the N=3/
     N=4 passivity violation; projecting both `mzi_arm` and `coupler` gives
     the cleanest result (N=4 total power stayed in [0.82, 1.00] across a full
-    wavelength sweep, vs. up to 1.26 unprojected). See
-    `docs/simulation_settings_record.md`'s `circuits/mzi_lattice.py`
-    (`unitary_project`) section for the full investigation."""
+    wavelength sweep, vs. up to 1.26 unprojected)."""
 
     def wrapped(wl=1.35):
         s = model_fn(wl=wl)
