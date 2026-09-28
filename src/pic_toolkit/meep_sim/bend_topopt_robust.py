@@ -59,7 +59,9 @@ import numpy as np
 import nlopt
 import scipy.optimize
 from scipy.interpolate import RegularGridInterpolator
+from scipy import ndimage
 from autograd import numpy as npa
+from autograd import grad as _autograd_grad
 from autograd import tensor_jacobian_product
 
 from .bend_topopt import (
@@ -89,8 +91,32 @@ DEFAULT_PARAMS = {
     if k not in ("cell_x_um", "cell_y_um", "design_region_center")
 }
 DEFAULT_PARAMS.update({
-    "design_region_x_um": 3.0,   # was 4.5 in bend_topopt.py -- shrunk per the fabrication-
-    "design_region_y_um": 3.0,   # robustness study's own scope, not a physics requirement.
+    "design_region_x_um": 2.5,   # 1.85 wavelengths. A first footprint sweep at resolution=20
+    "design_region_y_um": 2.5,   # (contaminated by that resolution's own inadequacy -- see
+                                  # design_grid_n's and resolution's own comments) picked 2.0um;
+                                  # re-measured at the corrected settings (MMA, trained at
+                                  # resolution=30, validated at resolution=40, corner-biased
+                                  # start) against a conventional, un-optimized Euler bend of the
+                                  # largest radius that fits each footprint:
+                                  #
+                                  #   region   conventional   topology-opt   advantage
+                                  #   4.05um      0.9380         0.9412        +0.3%
+                                  #   3.50um      0.8699         0.8897        +2.3%
+                                  #   3.00um      0.7613         0.8678        +14.0%
+                                  #   2.50um      0.6254         0.8163        +30.5%
+                                  #   2.00um      0.4668         ~0.68-0.69    +46-48%
+                                  #
+                                  # 2.0um has the largest RELATIVE advantage, but its absolute
+                                  # nominal transmission (~0.68) sits under a 0.75 target with
+                                  # no margin, and -- importantly for a fabrication-ROBUSTNESS
+                                  # study specifically -- a nominal design that already performs
+                                  # poorly has correspondingly less room to demonstrate a
+                                  # convincing "before/after" robustness story. 2.5um clears 0.80
+                                  # while keeping a large (30.5%) margin over a conventional
+                                  # bend, and was the smallest region to do so -- the balance
+                                  # point between "small enough that topology optimization has
+                                  # real work to do" and "high enough absolute performance for
+                                  # the robustness study built on top of it to matter."
     "margin_um": 1.0,            # NEW -- clearance on the two "empty" sides of the compact
                                   # domain (see _domain_compact()), bend.py's own margin_um role.
     "arm_lead_um": 0.4,          # NEW -- straight-waveguide length between the port reference
@@ -101,11 +127,24 @@ DEFAULT_PARAMS.update({
                                   # its ~32% wasted cell area -- this makes the buffer explicit
                                   # and small on the two sides that need it, and drops it (down
                                   # to just dpml_um+margin_um) on the two that don't.
-    "design_grid_n": 121,         # 25nm pitch (3.0um/120) -- MEASURED necessity at the OLD
-                                  # 4.5um/181-grid combination (same 25nm pitch), NOT assumed to
-                                  # transfer just because the pitch matches; re-verify this at
-                                  # the new region size before trusting it (see the notebook's
-                                  # design-grid-resolution section). Background: mpa.conic_filter
+    "resolution": 30,             # px/um, OVERRIDES bend_topopt.py's 20. Measured: at 20 the
+                                  # Yee grid carries only ~10 points per wavelength INSIDE
+                                  # silicon (lambda_Si = 1.35/2.7 = 0.5um), under the usual >=20
+                                  # rule of thumb. A resolution sweep on an otherwise identical
+                                  # run gave honest T21 = 0.9440 (res 20) / 0.9585 (res 30) /
+                                  # 0.9638 (res 40), and shrank the gap between the optimizer's
+                                  # own objective and the honest two-port measurement from 0.032
+                                  # to 0.011 at res 30 (no further at 40). 30 is the knee: +1.45
+                                  # points over res 20 for 3.4x the cost, while 40 adds only
+                                  # +0.53 more for another 3x on top.
+    "design_grid_n": 101,          # 25nm pitch (2.5um/100) -- the same pitch verified at every
+                                  # other region tried. At the smaller 2.0um region a FINER grid
+                                  # (161, 12.5nm) measured WORSE (honest T21 0.7070 vs 0.7560 at
+                                  # 81) and produced a blobbier design (perimeter/area 0.098 vs
+                                  # 0.270), since the fixed 0.2um filter then smooths over
+                                  # proportionally more pixels -- a caution against assuming
+                                  # finer-is-better if this region size is revisited.
+                                  # Why 25nm pitch at all: mpa.conic_filter
                                   # evaluates its own continuous kernel ONLY at the design grid's
                                   # own sample points, with no internal upsampling. At
                                   # bend_topopt.py's own design_grid_n=31 (150nm pitch) and
@@ -119,6 +158,9 @@ DEFAULT_PARAMS.update({
                                   # relationship. This is free: FDTD cost is governed by
                                   # params["resolution"] (the fixed Yee grid), not design_grid_n.
     "init_bend_radius_um": 0.6,   # Euler warm-start radius for the ROBUST optimization's start
+                                  # (at 2.5um, Lx/2=1.25um limits footprint=1.87*radius<=1.25,
+                                  # i.e. radius<=0.668; 0.6 leaves real margin, same 0.92-of-max
+                                  # ratio the conventional-Euler-reference measurement used).
                                   # (Section 7). build_euler_initial_density()'s curve is
                                   # anchored at the design region's own center (= the bend's
                                   # corner point), so it only ever occupies ONE quadrant of the
@@ -129,11 +171,10 @@ DEFAULT_PARAMS.update({
                                   # region (Lx/2=2.25 vs footprint 1.87), raises ValueError here
                                   # at 3.0um (Lx/2=1.5 vs footprint 1.87) -- the naive "does
                                   # 1.87*radius fit in Lx" check is wrong for this curve's own
-                                  # anchoring). radius_um=0.6 -> footprint=1.122um, margin=
-                                  # 1.5-1.122=0.378um -- matches notebook 04's own original
-                                  # margin ratio (0.38um at Lx=4.5um) rather than assuming a
-                                  # value is safe; re-verify in the notebook regardless (Section
-                                  # 9's own STOP checkpoint).
+                                  # anchoring). At this 4.5um region, radius_um=1.0 fits
+                                  # (Lx/2=2.25 vs footprint 1.87, margin 0.38um) -- the same
+                                  # value and margin notebook 04 itself uses; re-verify in the
+                                  # notebook regardless (Section 9's own STOP checkpoint).
     "eta_i": 0.5,                 # intermediate/nominal threshold -- identical role to
                                   # bend_topopt.py's single "eta"
     "eta_e": None,                # erosion threshold (Si shrinks, NEGATIVE bias_um) -- None
@@ -154,6 +195,65 @@ DEFAULT_PARAMS.update({
                                   # robust optimization -- a hard gate, not a soft target; see
                                   # the notebook's own STOP checkpoint for what happens if none
                                   # of the 5 seeds clears it.
+    "adjoint_maximum_run_time": 500,  # HANG GUARD on each forward/adjoint FDTD run, not a
+                                  # convergence knob. A mid-optimization density can form a
+                                  # high-Q resonant trap whose fields never satisfy
+                                  # stop_when_dft_decayed()'s criterion; uncapped, one such
+                                  # iteration ran 2+ hours at 100% CPU with zero progress and
+                                  # silently consumed a 3-hour headless notebook run (see
+                                  # docs/troubleshooting_log.md). Healthy runs on this domain
+                                  # converge by t~200, and the cell's own one-way optical
+                                  # transit is only ~24 meep time units, so 500 is ~2.5x normal
+                                  # convergence / ~20 transits -- generous enough never to
+                                  # truncate a well-behaved run, bounded enough that a pathology
+                                  # costs one noisy iteration instead of the whole job.
+    "validation_maximum_run_time": 1000,  # same guard for the honest two-port validation runs,
+                                  # which are few and one-off, so they get a looser cap. If it
+                                  # ever bites, checks.run_all_checks's energy-conservation test
+                                  # is what surfaces the truncation rather than it passing quietly.
+    "optimizer": "mma",          # "mma" or "adam". Adam (the Tidy3D tutorial's optimizer) is
+                                  # implemented and available, but MMA measured better once the
+                                  # comparison was made fairly. The trap worth recording: a
+                                  # first sweep at resolution=20 made Adam(lr=0.2) look best
+                                  # (0.7560 vs MMA's 0.7401) -- but BOTH were validated at
+                                  # resolution=20, which over-reports this small, multi-component
+                                  # 2.0um design by ~7 points (re-validating that same design
+                                  # gives 0.6848 / 0.6945 / 0.6752 at resolution 30 / 40 / 50).
+                                  # Re-swept at resolution=30 and validated at 40, the ordering
+                                  # inverts: MMA 0.6870, Adam 0.6701 (lr=0.05), 0.6571 (0.1),
+                                  # 0.6565 (0.02), 0.6143 (0.2). Adam's learning rate is also not
+                                  # resolution-invariant -- the adjoint gradient's scale depends
+                                  # on the discretization, so lr tuned at one resolution
+                                  # overshoots at another (visible as fill fraction climbing
+                                  # 0.299 -> 0.371 -> 0.440 -> 0.472 with lr).
+    "learning_rate": 0.05,       # Adam step size, used only by run_adam_optimization_compact
+                                  # (NLopt MMA has no learning rate -- its closest analogue is
+                                  # init_step below). The Tidy3D tutorial uses Adam at lr=1.0,
+                                  # but its design variables and gradient scaling differ from
+                                  # this module's, so treat that value as a starting point to
+                                  # sweep rather than a transferable constant.
+    "adam_beta1": 0.9,           # standard Adam momentum terms
+    "adam_beta2": 0.999,
+    "adam_eps": 1e-8,
+    "penalty_strength": 0.0,     # weight on minimum_length_penalty() in the objective.
+                                  # 0.0 = OFF (the conic filter's implicit smoothing is the
+                                  # only length-scale control, this module's original
+                                  # behaviour). The Tidy3D topology-optimization tutorial
+                                  # instead subtracts an erosion-dilation penalty from
+                                  # transmission to enforce a minimum printable feature size
+                                  # explicitly; set this > 0 to do the same here. Calibrate
+                                  # it against the measured penalty magnitude at iteration 1
+                                  # rather than guessing -- the transmission term is O(1)
+                                  # while the raw constraint value is typically far smaller.
+    "penalty_eta_e": 0.75,        # erosion threshold for the geometric constraint. 0.75
+                                  # makes the enforced minimum feature size exactly equal to
+                                  # filter_radius_um (see minimum_length_um()), which is the
+                                  # tutorial's own choice; the void-phase constraint uses
+                                  # 1-penalty_eta_e symmetrically.
+    "penalty_c": 1000.0,          # constraint decay-rate parameter (meep.adjoint documents a
+                                  # usable range of 1e0-1e8). Affects how sharply the
+                                  # indicator localizes to violating pixels, not the length
+                                  # scale itself.
     "baseline_corner_bias_sigma_um": 0.2,  # Gaussian width for build_corner_biased_random_
                                   # density()'s silicon-probability envelope -- set equal to
                                   # filter_radius_um as a principled starting point (a
@@ -207,6 +307,91 @@ def _mapping_robust(x, params: dict, eta: float) -> np.ndarray:
     projected = mpa.tanh_projection(filtered, params["beta"], eta)
     projected = npa.clip(projected, 0.0, 1.0)
     return projected.flatten()
+
+
+# ---------------------------------------------------------------------------
+# Minimum-length-scale penalty (Zhou/Lazarov/Wang/Sigmund 2015 geometric
+# constraints), the same mechanism the Tidy3D topology-optimization tutorial
+# applies as its "erosion-dilation penalty". meep.adjoint ships these
+# ready-made and autograd-differentiable, so the objective can enforce a
+# minimum printable feature size explicitly instead of leaving it entirely to
+# the conic filter's implicit smoothing.
+# ---------------------------------------------------------------------------
+def minimum_length_um(params: dict) -> float:
+    """The minimum feature size the penalty's `penalty_eta_e` actually
+    enforces, given this module's own `filter_radius_um`. Inverse of
+    mpa.get_conic_radius_from_eta_e (which solves the other direction):
+
+        eta_e in [0.5, 0.75):  b = 2 * R * sqrt(eta_e - 0.5)
+        eta_e in [0.75, 1.0]:  b = R * (2 - 2*sqrt(1 - eta_e))
+
+    so the default `penalty_eta_e = 0.75` enforces b = R exactly -- minimum
+    feature size equal to the filter radius, matching the Tidy3D tutorial's
+    own choice.
+    """
+    r = params["filter_radius_um"]
+    eta_e = params["penalty_eta_e"]
+    if 0.5 <= eta_e < 0.75:
+        return float(2 * r * np.sqrt(eta_e - 0.5))
+    if 0.75 <= eta_e <= 1.0:
+        return float(r * (2 - 2 * np.sqrt(1 - eta_e)))
+    raise ValueError("penalty_eta_e must be in [0.5, 1.0]")
+
+
+def minimum_length_penalty(x, params: dict, beta: float):
+    """Solid- and void-phase geometric constraints summed into a single
+    scalar penalty, differentiable by autograd all the way back to the raw
+    design variables `x`. Built from the SAME conic filter and tanh
+    projection `_mapping_robust` uses, passed to mpa.constraint_solid /
+    mpa.constraint_void as their `filter_f` / `threshold_f` handles, so the
+    penalty and the geometry it penalizes cannot drift apart.
+
+    Returns a small non-negative number (0 when no feature violates the
+    length scale), which `run_adjoint_optimization_compact` SUBTRACTS from
+    the transmission objective, scaled by `params["penalty_strength"]`.
+    """
+    n = params["design_grid_n"]
+    Lx, Ly = params["design_region_x_um"], params["design_region_y_um"]
+    design_region_resolution = (n - 1) / Lx
+
+    def filter_f(a):
+        return mpa.conic_filter(
+            a.reshape(n, n), params["filter_radius_um"], Lx, Ly, design_region_resolution
+        )
+
+    def threshold_f(a):
+        return mpa.tanh_projection(a, beta, params["eta_i"])
+
+    eta_e = params["penalty_eta_e"]
+    c = params["penalty_c"]
+    g_solid = mpa.constraint_solid(x, c, eta_e, filter_f, threshold_f, design_region_resolution)
+    g_void = mpa.constraint_void(x, c, 1.0 - eta_e, filter_f, threshold_f, design_region_resolution)
+    return g_solid + g_void
+
+
+# ---------------------------------------------------------------------------
+# Structure metrics -- "did topology optimization actually earn its name
+# here?" A plain smooth bend is one connected blob with no enclosed voids and
+# a low perimeter-to-area ratio; a genuinely freeform design has detached
+# pieces, enclosed holes, and/or far more boundary per unit area. Measured
+# alongside transmission because a design that merely reproduces a
+# conventional waveguide is a different (and less interesting) outcome even
+# when its transmission is excellent.
+# ---------------------------------------------------------------------------
+def structure_metrics(binarized: np.ndarray) -> dict:
+    solid = np.asarray(binarized) >= 0.5
+    n_components = int(ndimage.label(solid)[1])
+    voids, n_voids = ndimage.label(~solid)
+    border_labels = set(voids[0, :]) | set(voids[-1, :]) | set(voids[:, 0]) | set(voids[:, -1])
+    enclosed_holes = int(sum(1 for i in range(1, n_voids + 1) if i not in border_labels))
+    perimeter = int((solid[:-1, :] != solid[1:, :]).sum() + (solid[:, :-1] != solid[:, 1:]).sum())
+    area = int(solid.sum())
+    return {
+        "fill_fraction": float(solid.mean()),
+        "n_components": n_components,
+        "enclosed_holes": enclosed_holes,
+        "perimeter_over_area": float(perimeter / max(area, 1)),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -605,7 +790,19 @@ def _make_simulation_compact(params: dict, weights, launch_from: str, capture_df
 def _run_one_direction_compact(params: dict, weights, launch_from: str, capture_dft: bool):
     sim, mon1, mon2, dft_obj = _make_simulation_compact(params, weights, launch_from, capture_dft)
     with _quiet_meep():
-        sim.run(until_after_sources=mp.stop_when_dft_decayed())
+        # maximum_run_time is a HANG GUARD, not a convergence setting: a
+        # mid-optimization design can form a high-Q resonant trap whose fields
+        # effectively never satisfy the decay criterion, and with no cap
+        # `stop_when_dft_decayed()` then runs forever (measured: one adjoint
+        # iteration burned 2+ hours at 100% CPU with no progress, which is also
+        # what silently ate a 3-hour headless notebook run -- see
+        # docs/troubleshooting_log.md). A healthy run here converges by
+        # t~200 (verified: identical S-parameters at minimum_run_time 0/50/
+        # 200/400), so this cap is ~5x normal and only ever bites a pathology.
+        # If it does bite, the energy-conservation check will show it rather
+        # than the truncation passing silently.
+        sim.run(until_after_sources=mp.stop_when_dft_decayed(
+            maximum_run_time=params["validation_maximum_run_time"]))
         res1 = sim.get_eigenmode_coefficients(mon1, [1], eig_parity=mp.TE)
         res2 = sim.get_eigenmode_coefficients(mon2, [1], eig_parity=mp.TE)
         freqs = np.array(mp.get_flux_freqs(mon1))
@@ -754,6 +951,8 @@ def build_optimization_problem_compact(params: dict):
         df=0,
         nf=1,
         minimum_run_time=params["adjoint_minimum_run_time"],
+        maximum_run_time=params["adjoint_maximum_run_time"],  # hang guard -- see
+        # _run_one_direction_compact's own note on why this is not optional here.
     )
     return opt, design_variables, design_region
 
@@ -821,11 +1020,26 @@ def run_adjoint_optimization_compact(
                 gradient[:] = tensor_jacobian_product(_mapping_robust, 0)(
                     x, stage_params, params["eta_i"], dJ_du
                 )
-            evaluation_history.append(float(f0))
+
+            # Optional minimum-length-scale penalty (off unless penalty_strength>0).
+            # Purely a function of x through the same filter/projection, so its
+            # gradient comes straight from autograd -- no extra FDTD solve.
+            penalty = 0.0
+            if params["penalty_strength"] > 0:
+                penalty = float(minimum_length_penalty(x, stage_params, beta))
+                if gradient.size > 0:
+                    gradient[:] -= params["penalty_strength"] * np.asarray(
+                        _autograd_grad(minimum_length_penalty, 0)(x, stage_params, beta)
+                    )
+            f_total = f0 - params["penalty_strength"] * penalty
+
+            evaluation_history.append(float(f_total))
             i = len(evaluation_history)
-            print(f"[{i}/{n_iterations}  {100 * i // n_iterations}%]  beta={beta:g}  J={float(f0):.6f}",
-                  flush=True)
-            return float(f0)
+            suffix = (f"  (transmission={f0:.6f} penalty={penalty:.3e})"
+                      if params["penalty_strength"] > 0 else "")
+            print(f"[{i}/{n_iterations}  {100 * i // n_iterations}%]  beta={beta:g}  "
+                  f"J={float(f_total):.6f}{suffix}", flush=True)
+            return float(f_total)
 
         solver = nlopt.opt(nlopt.LD_MMA, n_params)
         solver.set_lower_bounds(0.0)
@@ -834,6 +1048,100 @@ def run_adjoint_optimization_compact(
         solver.set_max_objective(nlopt_objective)
         solver.set_maxeval(iters_per_stage)
         x_cur = solver.optimize(x_cur)
+
+    final_params = {**params, "beta": beta_schedule[-1]}
+    final_weights_continuous = np.array(_mapping_robust(x_cur, final_params, params["eta_i"])).reshape(n, n)
+    final_weights_binarized = np.where(final_weights_continuous >= 0.5, 1.0, 0.0)
+
+    sim_params = {
+        **params,
+        "meep_version": mp.__version__,
+        "python_version": platform.python_version(),
+        "creation_date": date.today().isoformat(),
+    }
+
+    return OptimizationResult(
+        evaluation_history=np.array(evaluation_history),
+        x_opt=x_cur,
+        final_weights_continuous=final_weights_continuous,
+        final_weights_binarized=final_weights_binarized,
+        sim_params=sim_params,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Adam alternative to NLopt MMA -- the optimizer the Tidy3D topology-
+# optimization tutorial uses (Adam, learning rate 1.0). NLopt's MMA has no
+# learning rate at all (its closest analogue is `init_step`), so comparing
+# "learning rate" against that tutorial requires an actual Adam loop.
+#
+# `optimization/adam.py` and `adam_nd.py` already exist in this toolkit but
+# are NOT reusable here: they are JAX-based, take the gradient via
+# jax.value_and_grad rather than accepting one, assume a handful of SCALAR
+# parameters (not a 6561-to-32761-element design array), and `adam.py` cannot
+# even be imported alongside meep (its import chain asserts meep is absent).
+# Only the update rule itself carries over, which is the ten lines below.
+# ---------------------------------------------------------------------------
+def run_adam_optimization_compact(
+    params: dict | None = None, init_weights: np.ndarray | None = None,
+) -> OptimizationResult:
+    """Same objective, mapping, beta continuation and penalty as
+    run_adjoint_optimization_compact, but driven by Adam with an explicit
+    `learning_rate` instead of NLopt MMA. Design variables are clipped back
+    into [0,1] after every step (MMA enforced those as box constraints)."""
+    params = {**DEFAULT_PARAMS, **(params or {})}
+    mp.verbosity(0)
+
+    opt, _, _ = build_optimization_problem_compact(params)
+    n = params["design_grid_n"]
+    n_params = n * n
+    beta_schedule = params["beta_schedule"]
+    iters_per_stage = params["iters_per_stage"]
+    n_iterations = len(beta_schedule) * iters_per_stage
+    lr = params["learning_rate"]
+    b1, b2, eps = params["adam_beta1"], params["adam_beta2"], params["adam_eps"]
+
+    x_cur = (
+        np.asarray(init_weights, dtype=float).flatten()
+        if init_weights is not None
+        else params["init_density"] * np.ones(n_params)
+    )
+    m = np.zeros(n_params)
+    v = np.zeros(n_params)
+    step = 0
+    evaluation_history = []
+
+    for beta in beta_schedule:
+        stage_params = {**params, "beta": beta}
+        for _ in range(iters_per_stage):
+            step += 1
+            mapped = _mapping_robust(x_cur, stage_params, params["eta_i"])
+            with _quiet_meep():
+                f0, dJ_du = opt([mapped])
+            f0 = np.real(f0[0]) if hasattr(f0, "__len__") else float(np.real(f0))
+            gradient = np.asarray(tensor_jacobian_product(_mapping_robust, 0)(
+                x_cur, stage_params, params["eta_i"], np.squeeze(dJ_du)
+            ))
+
+            penalty = 0.0
+            if params["penalty_strength"] > 0:
+                penalty = float(minimum_length_penalty(x_cur, stage_params, beta))
+                gradient = gradient - params["penalty_strength"] * np.asarray(
+                    _autograd_grad(minimum_length_penalty, 0)(x_cur, stage_params, beta)
+                )
+            f_total = f0 - params["penalty_strength"] * penalty
+
+            # Adam, ASCENDING (this is a maximization), then clip to the box
+            # MMA enforced natively.
+            m = b1 * m + (1 - b1) * gradient
+            v = b2 * v + (1 - b2) * gradient ** 2
+            m_hat = m / (1 - b1 ** step)
+            v_hat = v / (1 - b2 ** step)
+            x_cur = np.clip(x_cur + lr * m_hat / (np.sqrt(v_hat) + eps), 0.0, 1.0)
+
+            evaluation_history.append(float(f_total))
+            print(f"[{step}/{n_iterations}  {100 * step // n_iterations}%]  beta={beta:g}  "
+                  f"J={f_total:.6f}  (adam lr={lr:g})", flush=True)
 
     final_params = {**params, "beta": beta_schedule[-1]}
     final_weights_continuous = np.array(_mapping_robust(x_cur, final_params, params["eta_i"])).reshape(n, n)
@@ -904,6 +1212,11 @@ def run_robust_adjoint_optimization_compact(
     def _scalar(f0):
         return np.real(f0[0]) if hasattr(f0, "__len__") else float(np.real(f0))
 
+    use_adam = params.get("optimizer", "mma") == "adam"
+    adam_m = np.zeros(n_params)
+    adam_v = np.zeros(n_params)
+    adam_step = 0
+
     for beta in beta_schedule:
         stage_params = {**params, "beta": beta}
 
@@ -944,13 +1257,31 @@ def run_robust_adjoint_optimization_compact(
             )
             return f_avg
 
-        solver = nlopt.opt(nlopt.LD_MMA, n_params)
-        solver.set_lower_bounds(0.0)
-        solver.set_upper_bounds(1.0)
-        solver.set_initial_step(params["init_step"])
-        solver.set_max_objective(nlopt_objective)
-        solver.set_maxeval(iters_per_stage)
-        x_cur = solver.optimize(x_cur)
+        if use_adam:
+            # Same averaged objective/gradient, driven by Adam instead of MMA
+            # (see run_adam_optimization_compact for why this module carries
+            # its own Adam). nlopt_objective fills `gradient` in place, so it
+            # is reused verbatim -- the two optimizers differ only in what they
+            # do with that gradient.
+            lr = params["learning_rate"]
+            b1, b2, eps = params["adam_beta1"], params["adam_beta2"], params["adam_eps"]
+            for _ in range(iters_per_stage):
+                adam_step += 1
+                gradient = np.zeros(n_params)
+                nlopt_objective(x_cur, gradient)
+                adam_m = b1 * adam_m + (1 - b1) * gradient
+                adam_v = b2 * adam_v + (1 - b2) * gradient ** 2
+                m_hat = adam_m / (1 - b1 ** adam_step)
+                v_hat = adam_v / (1 - b2 ** adam_step)
+                x_cur = np.clip(x_cur + lr * m_hat / (np.sqrt(v_hat) + eps), 0.0, 1.0)
+        else:
+            solver = nlopt.opt(nlopt.LD_MMA, n_params)
+            solver.set_lower_bounds(0.0)
+            solver.set_upper_bounds(1.0)
+            solver.set_initial_step(params["init_step"])
+            solver.set_max_objective(nlopt_objective)
+            solver.set_maxeval(iters_per_stage)
+            x_cur = solver.optimize(x_cur)
 
     final_params = {**params, "beta": beta_schedule[-1]}
     final_weights_continuous = {
@@ -1025,3 +1356,128 @@ def apply_bias_to_frozen_mask(
     fine_params = {**params, "design_grid_n": n_fine, "beta": beta}
     mapped = _mapping_robust(upsampled.flatten(), fine_params, eta)
     return np.array(mapped).reshape(n_fine, n_fine), fine_params
+
+
+# ---------------------------------------------------------------------------
+# Raster (pixel-density) -> GDS. No existing path in this toolkit goes this
+# direction: `gds_import.py` converts GDS -> meep prisms, and every other
+# `meep_sim` module's `build_gf_component()` starts from parametric
+# gdsfactory primitives (rectangles, bends, bezier curves), never a pixel
+# array, so a topology-optimized design has never needed a GDS export before.
+# Built fresh here on `skimage.measure.find_contours` (marching squares).
+# ---------------------------------------------------------------------------
+def _contour_signed_area(contour: np.ndarray) -> float:
+    """Shoelace formula on a closed (row, col) contour from
+    skimage.measure.find_contours. Verified directly on a synthetic solid
+    annulus (a filled ring with a hole in the middle), not assumed from the
+    docs: `find_contours` returns the OUTER solid boundary with NEGATIVE
+    signed area under this formula, and the boundary of an ENCLOSED HOLE
+    with POSITIVE signed area."""
+    r, c = contour[:, 0], contour[:, 1]
+    return 0.5 * float(np.sum(r[:-1] * c[1:] - r[1:] * c[:-1]) + (r[-1] * c[0] - r[0] * c[-1]))
+
+
+def _rasterize_full_device(
+    weights_binary: np.ndarray, params: dict, dom: dict, margin_um: float = 0.3,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Rasterize the WHOLE compact-domain device -- straight input/output
+    arms (matching build_geometry_compact's own in_wg/out_wg mp.Block
+    definitions) PLUS the design region's own binarized density -- onto one
+    combined pixel grid at the design grid's own pitch, extended by
+    `margin_um` of cladding on every side.
+
+    Required, not cosmetic: tracing the design-region density in isolation
+    breaks for a genuinely freeform design, because its material can reach
+    ALL FOUR edges of the design region, not just the two "arm" edges
+    (measured directly on the final robust design: solid pixels present on
+    every one of its four border rows/columns). A solid region touching the
+    array's own border does not close into a simple marching-squares contour
+    loop, which silently corrupted the solid/hole split (measured: 5 solid +
+    5 "hole" contours recovered where the true design has 6 solid components
+    and exactly 1 enclosed hole). Embedding the density in the full device
+    (arms extending well past the design region, then a cladding margin
+    beyond THAT) guarantees every solid region is fully surrounded by
+    cladding somewhere in the canvas, so every contour closes correctly.
+    """
+    n = params["design_grid_n"]
+    Lx, Ly = params["design_region_x_um"], params["design_region_y_um"]
+    pitch = Lx / (n - 1)
+    Sx = Sy = dom["cell_x_um"]
+    x0, y0 = dom["x0"], dom["y0"]
+    w = params["wg_width_um"]
+
+    half_extent = Sx / 2 + margin_um
+    n_canvas = int(round(2 * half_extent / pitch)) + 1
+    grid = np.linspace(-half_extent, half_extent, n_canvas)
+    gx, gy = np.meshgrid(grid, grid, indexing="ij")
+
+    canvas = np.zeros((n_canvas, n_canvas))
+    in_x1, in_x2 = -Sx / 2, x0 + Lx / 2
+    canvas[(gx >= in_x1) & (gx <= in_x2) & (np.abs(gy - y0) <= w / 2)] = 1.0
+    out_y1, out_y2 = y0 - Ly / 2, Sy / 2
+    canvas[(np.abs(gx - x0) <= w / 2) & (gy >= out_y1) & (gy <= out_y2)] = 1.0
+
+    design_x = np.linspace(x0 - Lx / 2, x0 + Lx / 2, n)
+    design_y = np.linspace(y0 - Ly / 2, y0 + Ly / 2, n)
+    interp = RegularGridInterpolator(
+        (design_x, design_y), np.asarray(weights_binary, dtype=float),
+        method="nearest", bounds_error=False, fill_value=0.0,
+    )
+    in_region = (np.abs(gx - x0) <= Lx / 2 + 1e-9) & (np.abs(gy - y0) <= Ly / 2 + 1e-9)
+    canvas[in_region] = interp(np.stack([gx[in_region], gy[in_region]], axis=-1))
+
+    return canvas, grid
+
+
+def density_to_gds_component(
+    weights_binary: np.ndarray, params: dict, dom: dict,
+    layer: tuple = (1, 0), margin_um: float = 0.3,
+):
+    """Rasterize the full device (`_rasterize_full_device` -- arms + design
+    region density + cladding margin) and trace its silicon/cladding
+    boundary (marching squares, `skimage.measure.find_contours` at level
+    0.5) into a `gdsfactory.Component` on `layer`, in the same physical (um)
+    coordinate frame `_domain_compact` uses (`dom` = its own return value).
+
+    Handles enclosed holes correctly rather than filling them in: `find_
+    contours` returns one closed loop per solid-void boundary, INCLUDING the
+    boundary of any hole enclosed within a solid region, and the two wind in
+    opposite directions (signed area, `_contour_signed_area`, is NEGATIVE for
+    an outer solid boundary and POSITIVE for a hole here -- verified directly
+    against a synthetic solid-annulus test pattern, not assumed). Outer
+    boundaries are added as polygons on `layer`; if any hole boundaries
+    exist, their own polygons are unioned and then removed from the solid
+    via `gf.boolean` ("not"), rather than silently rendering the hole as
+    solid material.
+    """
+    import gdsfactory as gf
+    from skimage import measure
+
+    canvas, grid = _rasterize_full_device(weights_binary, params, dom, margin_um=margin_um)
+    n_canvas = len(grid)
+    pitch = grid[1] - grid[0]
+
+    def to_um(contour: np.ndarray) -> list[tuple[float, float]]:
+        # contour columns are (row, col) in array-INDEX space; this canvas is
+        # built with np.meshgrid(..., indexing="ij"), so axis 0 (row) is the
+        # x-direction and axis 1 (col) is the y-direction.
+        row, col = contour[:, 0], contour[:, 1]
+        xs = grid[0] + row * pitch
+        ys = grid[0] + col * pitch
+        return list(zip(xs.tolist(), ys.tolist()))
+
+    contours = measure.find_contours(canvas, level=0.5)
+    solids = [c for c in contours if _contour_signed_area(c) < 0 and len(c) >= 3]
+    holes = [c for c in contours if _contour_signed_area(c) > 0 and len(c) >= 3]
+
+    solid_component = gf.Component()
+    for c in solids:
+        solid_component.add_polygon(to_um(c), layer=layer)
+
+    if not holes:
+        return solid_component
+
+    hole_component = gf.Component()
+    for c in holes:
+        hole_component.add_polygon(to_um(c), layer=layer)
+    return gf.boolean(solid_component, hole_component, operation="not", layer=layer)

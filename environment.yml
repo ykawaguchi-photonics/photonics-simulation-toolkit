@@ -19,6 +19,13 @@ dependencies:
       # component's build_gf_component() -- a hard dependency, not exploratory
       # (it was previously imported by spiral_gds.py/notebook 07 without being
       # declared here).
+      - scikit-image
+      # scikit-image's skimage.measure.find_contours (marching squares) is what
+      # bend_topopt_robust.py's density_to_gds_component() traces a raster
+      # topology-optimization density into GDS polygons with -- the only
+      # raster-to-GDS path in this toolkit (every other component goes the
+      # other way, from parametric gdsfactory shapes). Was already present as
+      # a transitive dependency before this was declared explicitly.
       # klujax is deliberately NOT installed: at the time of writing, the
       # latest klujax (0.4.3) is incompatible with sax's default backend
       # (missing coo_mul_vec) and the last klujax compatible with that
