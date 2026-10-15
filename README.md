@@ -71,6 +71,7 @@ any expensive or consequential step.
 | `08_mzm.ipynb` | Mach-Zehnder modulator (push-pull, Δn-defined Vπ) | ✅ |
 | `09_grating_coupler.ipynb` | Grating coupler (x-z cross-section) | not yet promoted |
 | `10_add_drop_ring_resonator.ipynb` | Add-drop ring resonator | ✅ |
+| `11_tfln_mzm.ipynb` | Thin-film LiNbO₃ electro-optic MZM (Pockels VπL, traveling-wave bandwidth) | not yet promoted |
 
 ## Circuit-level compositions
 
@@ -142,6 +143,17 @@ instead. All materials are **non-dispersive**: every `mp.Medium(index=...)`
 call uses a single constant index across the analyzed wavelength band, with
 no wavelength-dependent (Sellmeier/Lorentzian) susceptibility model anywhere
 in the toolkit.
+
+`11_tfln_mzm.ipynb` (x-cut thin-film lithium niobate electro-optic modulator)
+is the second exception. Its figure of merit only exists in the real
+cross-section, so it solves the rib cross-section with MPB using real bulk
+indices and lithium niobate's **uniaxial anisotropy**
+(`mp.Medium(epsilon_diag=...)`). The indices come from Sellmeier fits
+evaluated once at 1.35 µm, so they are still constant across the band. It
+reduces the cross-section to 2D effective indices only for its FDTD
+interferometer check. One quantity, the optical group index used for RF
+velocity matching, includes LN material dispersion, and the notebook labels
+it as such.
 
 These are deliberate, stated Phase-1 simplifications, not oversights — see
 each component's own module docstring (`src/pic_toolkit/meep_sim/*.py`) for

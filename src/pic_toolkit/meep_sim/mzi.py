@@ -562,12 +562,21 @@ def _leads(params: dict) -> list:
     x_edge = dom["cell_x"] / 2
     ports = _ports(params)
     blocks = []
+    # Each lead starts one pixel INSIDE the S-bend's last block rather than exactly
+    # at the port: abutting the two blocks at the port plane can leave a ~1e-14 um
+    # floating-point hairline gap, and when that plane also falls on a grid line
+    # Meep's subpixel averaging drops the core permittivity of that one pixel
+    # column -- invisible to the field, but the mode monitor sitting there then
+    # solves a wrong mode (see docs/troubleshooting_log.md). The overlap is core on
+    # core, so it changes nothing else; the port planes themselves do not move.
+    overlap = 1.0 / params["resolution"]
     for name, x_sign in [("in_top", -1), ("in_bot", -1), ("out_top", 1), ("out_bot", 1)]:
         p = ports[name]
         x_far = x_sign * x_edge
+        x_near = p.x - x_sign * overlap
         blocks.append(mp.Block(
-            size=mp.Vector3(abs(x_far - p.x), width, mp.inf),
-            center=mp.Vector3((x_far + p.x) / 2, p.y, 0),
+            size=mp.Vector3(abs(x_far - x_near), width, mp.inf),
+            center=mp.Vector3((x_far + x_near) / 2, p.y, 0),
             material=core,
         ))
     return blocks
