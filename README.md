@@ -73,6 +73,20 @@ any expensive or consequential step.
 | `10_add_drop_ring_resonator.ipynb` | Add-drop ring resonator | ✅ |
 | `11_tfln_mzm.ipynb` | Thin-film LiNbO₃ electro-optic MZM (Pockels VπL, traveling-wave bandwidth) | not yet promoted |
 
+## 3D track (fdtdx)
+
+Under `3d/`, kept separate from the 2D track above (its own data, design
+points and conda env), with true-3D FDTD counterparts of selected components
+run in [fdtdx](https://github.com/ymahlau/fdtdx), a JAX-based 3D solver:
+
+| Notebook | Component |
+|---|---|
+| `3d/notebooks/01b_waveguide_3d_fdtdx.ipynb` | 3D Si strip waveguide (TE-like mode, converged n_eff, 3D FDTD accuracy on a matched grid) |
+| `3d/notebooks/09b_grating_coupler_3d.ipynb` | Fan-shaped focusing grating coupler to a 2.5 µm lensed fiber (η = −1.49 dB at 1.35 µm), GDS export |
+
+See [3d/README.md](3d/README.md) for what differs from the 2D track and how to
+set up the `fdtdx` env.
+
 ## Circuit-level compositions
 
 Under `circuits/` — never imports Meep, only wires together already-cached
@@ -93,8 +107,10 @@ See [circuits/README.md](circuits/README.md) for the full derivation.
 ```
 notebooks/            Component-building notebooks (01-10, + 03b/04b/06b)
 circuits/              SAX circuit-level compositions + GDS exports
+3d/                    3D track (fdtdx): notebooks 01b/09b, own data/ and environment.yml
 src/pic_toolkit/
   meep_sim/            Meep FDTD simulation modules (one per component)
+  fdtdx_sim/           fdtdx 3D FDTD modules (3D track)
   models/               Meep-free SAX-compatible twins, read cached design points
   circuits/             SAX circuit building blocks (lattice, mux tree)
   params.py, sweep.py, sparams.py, checks.py, design_points.py, style.py, viz.py
@@ -154,6 +170,11 @@ reduces the cross-section to 2D effective indices only for its FDTD
 interferometer check. One quantity, the optical group index used for RF
 velocity matching, includes LN material dispersion, and the notebook labels
 it as such.
+
+The `3d/` notebooks are the third exception: true 3D FDTD (fdtdx) on the
+real cross-section with real bulk indices, still non-dispersive. Their results
+live in `3d/data/`, never in `data/design_points/`, so the 2D SAX models
+cannot pick them up (see [3d/README.md](3d/README.md)).
 
 These are deliberate, stated Phase-1 simplifications, not oversights — see
 each component's own module docstring (`src/pic_toolkit/meep_sim/*.py`) for

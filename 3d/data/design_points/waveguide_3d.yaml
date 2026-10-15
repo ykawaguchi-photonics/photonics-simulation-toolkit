@@ -1,0 +1,54 @@
+component: waveguide_3d
+parameters:
+  wg_width_um: 0.5
+  wg_height_um: 0.22
+  core_index: 3.48
+  clad_index: 1.44
+  wavelength_um: 1.35
+  polarization: TE-like (Ey-dominant), filter_pol='te'
+measured:
+  n_eff_reference_mpb: 2.646
+  n_eff_tidy3d_fine:
+    50: 2.6308116912841797
+    100: 2.651685953140259
+    150: 2.6429176330566406
+  res20:
+    core_on_grid_nm:
+    - 500.0
+    - 200.0
+    n_eff_fdtd: 2.655032001829575
+    n_eff_reference_on_grid_core: 2.5802218914031982
+    excess_vs_on_grid_core_pct: 2.8993673247882157
+    transmission_max_dev: 1.5507853159513196e-05
+  res50_matched:
+    cell_um:
+    - 3.0
+    - 2.02
+    - 1.62
+    dpml_um: 0.5
+    n_eff_fdtd: 2.662077356301108
+    excess_vs_reference_pct: 0.6076098375324301
+    transmission_max_dev: 2.5598352215716602e-06
+    grid_mode_n_eff:
+      TE-like: 2.6557412147521973
+      TM-like: 2.0762252807617188
+    upper_share:
+      TE-like: 0.4993945360183716
+      TM-like: 0.5109876394271851
+provenance:
+  method: 3D FDTD, mode-overlap phase + dense Ey phasor phase slope
+  solver: fdtdx 0.6.0 (jax 0.11.2, cpu)
+  module: pic_toolkit.fdtdx_sim.waveguide_3d
+  steps_res50: 4067
+validation:
+  te_like_ey_over_ez_res20: 4.879060745239258
+  detector_vs_line_n_eff_rel_diff_res50: 5.23946335873049e-07
+  tolerances:
+    transmission_dev: 0.03
+    n_eff_vs_on_grid_core_res20: 0.04
+    n_eff_vs_reference_res50: 0.025
+  passed: true
+rationale: 'Res 50 is the matched grid: 500 x 220 nm is exactly 25 x 11 cells and
+  the core is exactly centered, so the FDTD n_eff compares directly with the converged
+  reference; the remaining excess is the FDTD grid''s numerical dispersion. Res 20
+  holds a 500 x 200 nm core and is judged against that structure''s own reference.'

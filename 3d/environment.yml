@@ -1,0 +1,22 @@
+name: fdtdx
+channels:
+  - conda-forge
+dependencies:
+  # fdtdx needs Python >= 3.11, so the 3D track cannot share the 2D track's
+  # `mp` env (Python 3.10, pinned by pymeep 1.34).
+  - python=3.12
+  - pyyaml
+  - jupyterlab
+  - ipykernel
+  - nbconvert
+  - pip
+  - pip:
+      - fdtdx==0.6.0
+      # fdtdx pulls in its own jax and tidy3d (the local mode solver used by
+      # ModePlaneSource / ModeOverlapDetector). Pinned to the versions the
+      # 3D notebooks were run with.
+      - jax==0.11.2
+      - tidy3d==2.12.0
+      # pic_toolkit itself (style.py, design_points.py, fdtdx_sim/). Its
+      # pyproject declares no dependencies, so this pulls in nothing else.
+      - -e ..
