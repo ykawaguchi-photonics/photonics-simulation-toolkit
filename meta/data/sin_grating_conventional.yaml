@@ -1,0 +1,55 @@
+component: sin_grating_coupler_conventional
+parameters:
+  core: SiN 400 nm, n = 2.0
+  box_um: 4.58
+  top: SiO2
+  period_um: 0.926
+  n_periods: 22
+  n_atoms: 1
+  widths_um:
+  - 0.5298190436322662
+  - 0.39618095636773387
+  etch_um: 0.2028070364068232
+  fiber: SMF-28, MFD 9.2 um, 10 deg in oxide
+  wavelength_um: 1.35
+measured:
+  eta: 0.38530731324893236
+  eta_db: -4.141927478686128
+  spec:
+  - 0.056103316725348
+  - 0.08250650450338885
+  - 0.11480640541895071
+  - 0.15133644721434358
+  - 0.189662615783491
+  - 0.22806420202115418
+  - 0.2655152247821042
+  - 0.3015155726905599
+  - 0.33511103574493223
+  - 0.36417226505449346
+  - 0.38530731324893236
+  - 0.3942046962085827
+  - 0.3881250340233897
+  - 0.36963455858772243
+  - 0.3458893214920191
+  - 0.32223825970520836
+  - 0.2978598271452157
+  - 0.26815104666748335
+  - 0.22920170028960699
+  - 0.182134902988243
+  - 0.1357338188579985
+  band_1db_nm: 35.93681439227736
+  up: 0.5957342962590797
+  down: 0.22256713313361515
+  R: 0.0006143336047304235
+  T: 0.13465967170066873
+  directionality: 0.7280132660909634
+  mode_match: 0.6467771213919931
+  L_c_um: 10.095785466820839
+provenance:
+  method: Meep 2D x-z; adjoint + Adam at res 60; evaluated at res 160 (MaterialGrid)
+  module: pic_toolkit.meep_sim.sin_grating
+validation:
+  eta_le_up: true
+  block_cross_check_eta: 0.3932670501531832
+rationale: Adam optimum of eta at 1.35 um under a fixed period, widths >= 100 nm and
+  sum(widths) <= P.

@@ -87,6 +87,22 @@ run in [fdtdx](https://github.com/ymahlau/fdtdx), a JAX-based 3D solver:
 See [3d/README.md](3d/README.md) for what differs from the 2D track and how to
 set up the `fdtdx` env.
 
+## Meta-grating study (Meep 2D)
+
+Under `meta/`: can a meta-grating coupler (two or three tooth/groove "meta-atoms" per
+period) beat a conventional grating on a 400 nm SiN platform, when both are optimized
+the same way (Meep adjoint + Adam, fixed first-order period, ≥ 100 nm features, a
+standard 4.5 µm-class BOX)?
+
+| Notebook | Content |
+|---|---|
+| `meta/notebooks/01_sin_validation_mesh.ipynb` | model validation: mode, normalization, mesh, BOX standing wave, adjoint gradients, literature benchmark (Korček 2023 reproduced within 0.1 dB) |
+| `meta/notebooks/02_uniform_adam.ipynb` | conventional grating optimized: −4.14 dB |
+| `meta/notebooks/03_metagrating_adam.ipynb` | 2 and 3 meta-atoms per period: −5.04 / −7.49 dB. Same directionality; the low index contrast averages the small features away and weakens the grating |
+| `meta/notebooks/04_asi_overlay.ipynb` | grating in an a-Si overlay (vertical asymmetry, after Fraser et al. 2024): −1.66 dB, directionality 0.93; TE vs TM |
+
+See [meta/README.md](meta/README.md).
+
 ## Circuit-level compositions
 
 Under `circuits/` — never imports Meep, only wires together already-cached
@@ -108,6 +124,7 @@ See [circuits/README.md](circuits/README.md) for the full derivation.
 notebooks/            Component-building notebooks (01-10, + 03b/04b/06b)
 circuits/              SAX circuit-level compositions + GDS exports
 3d/                    3D track (fdtdx): notebooks 01b/09b, own data/ and environment.yml
+meta/                  SiN meta-grating study (Meep 2D): notebooks 01-03, cached data, literature
 src/pic_toolkit/
   meep_sim/            Meep FDTD simulation modules (one per component)
   fdtdx_sim/           fdtdx 3D FDTD modules (3D track)
@@ -170,6 +187,10 @@ reduces the cross-section to 2D effective indices only for its FDTD
 interferometer check. One quantity, the optical group index used for RF
 velocity matching, includes LN material dispersion, and the notebook labels
 it as such.
+
+The `meta/` notebooks (SiN grating couplers with and without an a-Si overlay) likewise
+resolve a real x-z layer stack with real bulk indices, non-dispersive, like
+`09_grating_coupler.ipynb`; their design points stay in `meta/data/`.
 
 The `3d/` notebooks are the third exception: true 3D FDTD (fdtdx) on the
 real cross-section with real bulk indices, still non-dispersive. Their results
