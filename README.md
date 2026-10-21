@@ -103,6 +103,20 @@ standard 4.5 µm-class BOX)?
 
 See [meta/README.md](meta/README.md).
 
+## Topological photonic crystals (Meep / MPB 2D)
+
+Under `topological/`: spin-Hall (Wu & Hu 2015, C6-deformed clusters) and valley-Hall
+(broken inversion) all-dielectric photonic crystals, each as a pillar (TM) and an
+air-hole (TE) crystal.
+
+| Notebook | Content |
+|---|---|
+| `topological/notebooks/01_unit_cells_and_edge_states.ipynb` | unit cells, bulk bands (Wu–Hu gap reproduced to 0.1 %), ribbon edge bands of the four domain walls |
+| `topological/notebooks/02_domain_walls_chiral_excitation.ipynb` | one-way edge transport from circularly polarized dipoles (directionality 0.83–0.99) |
+| `topological/notebooks/03_waveguide_to_topological_coupling.ipynb` | 500 nm strip → TE topological waveguide; adjoint topology-optimized transitions: spin 5.9 % → 48.7 %, valley 0 % → 77 % |
+
+See [topological/README.md](topological/README.md).
+
 ## Circuit-level compositions
 
 Under `circuits/` — never imports Meep, only wires together already-cached
@@ -125,6 +139,7 @@ notebooks/            Component-building notebooks (01-10, + 03b/04b/06b)
 circuits/              SAX circuit-level compositions + GDS exports
 3d/                    3D track (fdtdx): notebooks 01b/09b, own data/ and environment.yml
 meta/                  SiN meta-grating study (Meep 2D): notebooks 01-03, cached data, literature
+topological/           spin-/valley-Hall photonic crystals (Meep/MPB 2D): notebooks 01-03, scripts, cached data
 src/pic_toolkit/
   meep_sim/            Meep FDTD simulation modules (one per component)
   fdtdx_sim/           fdtdx 3D FDTD modules (3D track)
@@ -191,6 +206,10 @@ it as such.
 The `meta/` notebooks (SiN grating couplers with and without an a-Si overlay) likewise
 resolve a real x-z layer stack with real bulk indices, non-dispersive, like
 `09_grating_coupler.ipynb`; their design points stay in `meta/data/`.
+
+The `topological/` notebooks use bulk silicon (ε = 11.7) and air in a 2D model, as in the
+Wu–Hu paper they reproduce, instead of the 2D effective index; non-dispersive. Their
+design points stay in `topological/data/`.
 
 The `3d/` notebooks are the third exception: true 3D FDTD (fdtdx) on the
 real cross-section with real bulk indices, still non-dispersive. Their results
