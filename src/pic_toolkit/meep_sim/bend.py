@@ -41,13 +41,15 @@ discretization noise between the two curve representations) or
 gf.components.bend_euler (a clothoid/Euler-spiral bend whose curvature varies
 smoothly from zero to 1/radius_um -- a genuinely DIFFERENT shape from a
 circular arc of the same nominal radius, not just a re-discretization of it;
-see notebooks/02_bent_waveguide.ipynb's Section 3 comparison), selected by
+see si/notebooks/02_bent_waveguide.ipynb's Section 3 comparison), selected by
 params["bend_type"]. build_geometry_from_gds() converts it to Meep geometry
 via gds_import.py, and is the default simulate_baseline() uses. Unlike
-waveguide.py, no separate longer "simulation-only" lead is needed here:
-arm_length_um already reaches out to _domain()'s x_start/y_end, which the
-port/source/cell-sizing logic below is built around, so the same geometry
-serves both the exportable DUT and the FDTD run.
+waveguide.py, the exportable component ends at _domain()'s x_start/y_end,
+which the port/source/cell-sizing logic below is built around. For the FDTD
+run only, both arms are continued straight through the margin and the PML
+(_lead_extensions): an arm that ended in the cladding margin would be a
+cleaved facet (Fresnel reflection |S11|^2 ~ 6 % for n_eff 2.42 against 1.44)
+inside the measured S-matrix.
 """
 
 from __future__ import annotations
@@ -93,6 +95,8 @@ DEFAULT_PARAMS = {
     "margin_um": 1.5,        # clearance between structure/ports and the PML
     "port_offset_um": 1.0,   # ports sit this far (along each arm) from the corner/tangent point
     "source_offset_um": 0.5, # source planes sit this much further out than the ports
+    "lead_overrun_um": 1.0,  # simulation only: the leads continue through the margin and the
+                              # PML to this far beyond the cell edge (no facet in the cladding)
 }
 
 
@@ -336,6 +340,23 @@ def build_geometry_from_gds(params: dict) -> list:
     return gds_import.gds_component_to_prisms(gf_component, material=core)
 
 
+def _lead_extensions(params: dict) -> list:
+    """Simulation-only continuations of both arms from their outer ends
+    (x_start, y_end) to beyond the cell edge, so the guided mode leaves
+    through the PML instead of reflecting at a facet in the cladding margin."""
+    cell, _, x_start, y_end, shift = _domain(params)
+    core = mp.Medium(index=params["core_index"])
+    width = params["wg_width_um"]
+    x_far = -cell.x / 2 - params["lead_overrun_um"]
+    y_far = cell.y / 2 + params["lead_overrun_um"]
+    return [
+        mp.Block(size=mp.Vector3(x_start - x_far, width, mp.inf),
+                 center=mp.Vector3((x_start + x_far) / 2, shift.y), material=core),
+        mp.Block(size=mp.Vector3(width, y_far - y_end, mp.inf),
+                 center=mp.Vector3(shift.x, (y_end + y_far) / 2), material=core),
+    ]
+
+
 def _cell_and_clad(params: dict):
     cell, *_ = _domain(params)
     clad = mp.Medium(index=params["clad_index"])
@@ -349,6 +370,7 @@ def get_permittivity_map(params: dict, use_native_geometry: bool = False) -> Per
     compare."""
     cell, clad = _cell_and_clad(params)
     geometry = build_geometry(params) if use_native_geometry else build_geometry_from_gds(params)
+    geometry += _lead_extensions(params)
     sim = mp.Simulation(
         cell_size=cell,
         boundary_layers=[mp.PML(params["dpml_um"])],
@@ -501,6 +523,7 @@ def _make_simulation(params: dict, launch_from: str, capture_dft: bool,
     )
 
     geometry = build_geometry(params) if use_native_geometry else build_geometry_from_gds(params)
+    geometry += _lead_extensions(params)
     sim = mp.Simulation(
         cell_size=cell,
         boundary_layers=[mp.PML(params["dpml_um"])],

@@ -443,9 +443,11 @@ def _make_simulation(params: dict, launch_from: str, field_snapshot_freqs=None,
 
     dft_obj = None
     if field_snapshot_freqs:
+        # Frequency list in the (fcen, df, nfreq) position: passing the triple AND
+        # `freq=` makes Meep's fix_dft_args use an evenly spaced grid over the band and
+        # silently drop `freq=` (see racetrack._make_simulation).
         dft_obj = sim.add_dft_fields(
-            [mp.Hz], fcen, analysis_fwidth, len(field_snapshot_freqs),
-            freq=list(field_snapshot_freqs), center=mp.Vector3(), size=cell,
+            [mp.Hz], list(field_snapshot_freqs), center=mp.Vector3(), size=cell,
         )
 
     return sim, monitors, dft_obj
@@ -640,6 +642,45 @@ def simulate_baseline(params: dict | None = None, use_native_geometry: bool = Fa
         permittivity=permittivity,
         sim_params=sim_params,
     )
+
+
+def load_or_simulate_baseline(params: dict | None, artifact_stem, use_native_geometry: bool = False) -> AddDropRingResult:
+    """Cache-or-run wrapper around `simulate_baseline`: if `artifact_stem`(.npz/.json) exists
+    and every parameter it recorded matches `params` (and it has `n_freq` points), rebuild the
+    AddDropRingResult from it (no FDTD); otherwise simulate. The caller still validates and
+    saves, exactly as for a fresh run. `permittivity` is None for a cached result."""
+    from .. import artifact_cache
+
+    params = {**DEFAULT_PARAMS, **(params or {})}
+    if artifact_cache.artifact_exists(artifact_stem):
+        art = load_artifact(artifact_stem)
+        bad = artifact_cache.metadata_mismatches(art.metadata, params)
+        if len(art.wavelengths_um) != params["n_freq"]:
+            bad.append(f"n_freq: cached {len(art.wavelengths_um)} vs requested {params['n_freq']}")
+        if not bad:
+            print(f"loaded cached FDTD result: {artifact_stem}")
+            return AddDropRingResult(
+                wavelengths_um=art.wavelengths_um, freqs=art.freqs,
+                **{name: getattr(art, name) for name in _ARRAY_FIELDS},
+                port_names=art.port_names, permittivity=None,
+                sim_params={**params, "meep_version": art.metadata.get("meep_version"),
+                            "creation_date": art.metadata.get("creation_date"), "loaded_from": str(artifact_stem)},
+            )
+        print(f"cached artifact {artifact_stem} does not match the requested parameters, re-simulating: {bad}")
+    return simulate_baseline(params, use_native_geometry=use_native_geometry)
+
+
+def load_or_capture_field_snapshots(params: dict | None, wavelengths_um: list, cache_path,
+                                    launch_from: str = "input", use_native_geometry: bool = False) -> list:
+    """Cache-or-run wrapper around `capture_field_snapshots` (pickled at `cache_path`,
+    keyed by the full parameter set, the launch port and the requested wavelengths)."""
+    from .. import artifact_cache
+
+    params = {**DEFAULT_PARAMS, **(params or {})}
+    key = {"params": params, "wavelengths_um": [round(float(w), 9) for w in wavelengths_um],
+           "launch_from": launch_from, "use_native_geometry": use_native_geometry}
+    return artifact_cache.cached_pickle(
+        cache_path, key, lambda: capture_field_snapshots(params, wavelengths_um, launch_from, use_native_geometry))
 
 
 # ---------------------------------------------------------------------------

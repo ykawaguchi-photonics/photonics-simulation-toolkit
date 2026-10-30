@@ -3,7 +3,7 @@
 Architectural rule: this file NEVER imports meep, and NEVER launches an FDTD
 simulation. It only reads the cached, validated `fitted_model` coefficients
 (`n_eff` from the length-sweep cutback method, `n_g` from an MPB dispersion
-solve -- see `notebooks/01_waveguide_baseline.ipynb` Sections 5/5.2) via the
+solve -- see `si/notebooks/01_waveguide_baseline.ipynb` Sections 5/5.2) via the
 design point that stores them. If that design point doesn't exist yet,
 loading it below raises a clear error telling the user to run the baseline
 notebook first.
@@ -24,7 +24,7 @@ import numpy as np
 from .. import design_points, sparams
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DESIGN_POINT_PATH = _REPO_ROOT / "data" / "design_points" / "waveguide.yaml"
+_DESIGN_POINT_PATH = _REPO_ROOT / "si" / "data" / "design_points" / "waveguide.yaml"
 
 # gdsfactory's gf.components.straight() always names its two ports this way
 # (see meep_sim/waveguide.py's build_gf_component) -- fixed here rather than
@@ -46,7 +46,7 @@ def waveguide(wl=1.35, length_um: float | None = None):
     `circuits/wdm_mux4_sax.ipynb` reuse this model for a much longer
     (26um/16um) reference arm, where the interference phase is sensitive
     enough to dispersion that the group index genuinely matters -- see
-    `notebooks/01_waveguide_baseline.ipynb` Section 5.2 for how `n_g` was
+    `si/notebooks/01_waveguide_baseline.ipynb` Section 5.2 for how `n_g` was
     measured (MPB dispersion solve).
 
     The cutback sweep's amplitude channel measures FDTD's own noise floor
@@ -54,10 +54,16 @@ def waveguide(wl=1.35, length_um: float | None = None):
     mechanism); a meaningful loss number needs a lossy material model
     instead (see `racetrack.py`'s conductivity trick). S11/S22 are modeled as exactly zero
     (a well-designed straight waveguide's reflection is negligible,
-    confirmed by notebooks/01_waveguide_baseline.ipynb's passivity/energy-
+    confirmed by si/notebooks/01_waveguide_baseline.ipynb's passivity/energy-
     conservation checks on the raw FDTD data).
     """
     design_point = design_points.load_design_point(_DESIGN_POINT_PATH)
+    return waveguide_from_record(design_point, wl, length_um)
+
+
+def waveguide_from_record(design_point: dict, wl=1.35, length_um: float | None = None):
+    """`waveguide` evaluated from an already-loaded design-point record, so
+    another track (models/sin_waveguide.py) can reuse the same model form."""
     fitted = design_point["fitted_model"]
     n_eff0 = fitted["n_eff"]
     n_g0 = fitted["n_g"]

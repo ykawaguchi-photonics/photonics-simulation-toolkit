@@ -15,10 +15,10 @@ fabricable GDS layout.
 
 ## The pipeline
 
-1. **`notebooks/0N_*.ipynb`** — one notebook per PIC component. Builds the
+1. **`si/notebooks/0N_*.ipynb`** — one notebook per PIC component. Builds the
    geometry (gdsfactory-first), runs a Meep FDTD simulation, characterizes
    it (S-parameters, resonance, extinction, Vπ, etc.), and saves the result
-   as `data/design_points/<component>.yaml` — the single source of truth
+   as `si/data/design_points/<component>.yaml` — the single source of truth
    for that component's parameters and fitted/measured model.
 2. **`src/pic_toolkit/models/<component>.py`** — a **Meep-free** twin of each
    component that reads its cached design point and serves it as a
@@ -56,7 +56,13 @@ any expensive or consequential step.
 
 ## Components
 
-| Notebook | Component | Cached model |
+The notebooks are grouped by material platform: `si/` (silicon), `sin/` (silicon
+nitride) and `tfln/` (thin-film lithium niobate). Each platform has its own
+`notebooks/` and `data/` (design points, S-parameter artifacts, caches).
+
+### Si track (`si/`)
+
+| Notebook (`si/notebooks/`) | Component | Cached model |
 |---|---|---|
 | `01_waveguide_baseline.ipynb` | Straight waveguide baseline (TE mode, cross-section characterization) | ✅ |
 | `02_bent_waveguide.ipynb` | Bent waveguide (radius sweep, circular vs. Euler bends) | ✅ |
@@ -71,7 +77,28 @@ any expensive or consequential step.
 | `08_mzm.ipynb` | Mach-Zehnder modulator (push-pull, Δn-defined Vπ) | ✅ |
 | `09_grating_coupler.ipynb` | Grating coupler (x-z cross-section) | not yet promoted |
 | `10_add_drop_ring_resonator.ipynb` | Add-drop ring resonator | ✅ |
-| `11_tfln_mzm.ipynb` | Thin-film LiNbO₃ electro-optic MZM (Pockels VπL, traveling-wave bandwidth) | not yet promoted |
+
+### TFLN track (`tfln/`)
+
+| Notebook (`tfln/notebooks/`) | Component | Cached model |
+|---|---|---|
+| `01_tfln_mzm.ipynb` | Thin-film LiNbO₃ electro-optic MZM (Pockels VπL, traveling-wave bandwidth); formerly `notebooks/11_tfln_mzm.ipynb` | not yet promoted |
+
+### SiN track (`sin/`, Meep 2D)
+
+Under `sin/`, the same components are built for a
+400 nm SiN strip (0.9 µm wide) in the same 2D effective-index model. The core index
+(1.7650) is calibrated so that the 2D mode has the MPB n_eff of the real strip. The bend is
+compared against a Si reference calibrated the same way (500 × 220 nm, core 2.944). Both
+are benchmarked against published 3D results. Same modules, same band; own data and design
+points (`sin/data/`), read by `models/sin_*.py`.
+
+| Notebook | Component |
+|---|---|
+| `sin/notebooks/01_sin_waveguide_baseline.ipynb` | SiN straight waveguide (n_eff, n_g) and mode comparison with Si |
+| `sin/notebooks/02_sin_bent_waveguide.ipynb` | SiN bends (radius sweep, circular vs. Euler) and the radius needed vs. Si |
+
+See [sin/README.md](sin/README.md).
 
 ## 3D track (fdtdx)
 
@@ -135,7 +162,14 @@ See [circuits/README.md](circuits/README.md) for the full derivation.
 ## Repository structure
 
 ```
-notebooks/            Component-building notebooks (01-11, + 03b/04b/06b)
+si/                    Si track (Meep 2D)
+  notebooks/           Component-building notebooks (01-10, + 03b/04b/06b)
+  data/
+    design_points/     Per-component YAML -- the source of truth
+    sparams/           Cached S-parameter artifacts (.npz + .json) per component
+    field_cache/, gds/, blog_figures/
+sin/                   SiN track (Meep 2D): notebooks 01-02, own data/, literature
+tfln/                  TFLN track (MPB + Meep 2D): notebook 01, own data/
 circuits/              SAX circuit-level compositions + GDS exports
 3d/                    3D track (fdtdx): notebooks 01b/09b, own data/ and environment.yml
 meta/                  SiN meta-grating study (Meep 2D): notebooks 01-04, cached data, literature
@@ -146,9 +180,6 @@ src/pic_toolkit/
   models/               Meep-free SAX-compatible twins, read cached design points
   circuits/             SAX circuit building blocks (lattice, mux tree)
   params.py, sweep.py, sparams.py, checks.py, design_points.py, style.py, viz.py
-data/
-  design_points/        Per-component YAML — the source of truth
-  sparams/               Cached S-parameter artifacts (.npz + .json) per component
 scripts/               One-off sweep and study runner scripts
 ```
 
@@ -166,7 +197,7 @@ install of this package (`pic_toolkit`).
 
 ```bash
 conda activate mp
-jupyter lab notebooks/
+jupyter lab si/notebooks/     # or sin/notebooks/, tfln/notebooks/
 ```
 
 Notebooks are meant to be run cell-by-cell, not with "Run All" — each has
@@ -192,7 +223,7 @@ call uses a single constant index across the analyzed wavelength band, with
 no wavelength-dependent (Sellmeier/Lorentzian) susceptibility model anywhere
 in the toolkit.
 
-`11_tfln_mzm.ipynb` (x-cut thin-film lithium niobate electro-optic modulator)
+`tfln/notebooks/01_tfln_mzm.ipynb` (x-cut thin-film lithium niobate electro-optic modulator)
 is the second exception. Its figure of merit only exists in the real
 cross-section, so it solves the rib cross-section with MPB using real bulk
 indices and lithium niobate's **uniaxial anisotropy**
@@ -201,11 +232,16 @@ evaluated once at 1.35 µm, so they are still constant across the band. It
 reduces the cross-section to 2D effective indices only for its FDTD
 interferometer check. One quantity, the optical group index used for RF
 velocity matching, includes LN material dispersion, and the notebook labels
-it as such.
+it as such. Its design point stays in `tfln/data/`.
 
 The `meta/` notebooks (SiN grating couplers with and without an a-Si overlay) likewise
 resolve a real x-z layer stack with real bulk indices, non-dispersive, like
 `09_grating_coupler.ipynb`; their design points stay in `meta/data/`.
+
+The `sin/` notebooks keep the 2D effective-index model, but calibrate the core index to a
+real cross-section: 1.7650 gives the MPB n_eff (1.6753) of a 900 × 400 nm SiN (n = 2.0)
+strip in SiO₂ at 1.35 µm.
+Their design points stay in `sin/data/`.
 
 The `topological/` notebooks use bulk silicon (ε = 11.7) and air in a 2D model, as in the
 Wu–Hu paper they reproduce, instead of the 2D effective index; non-dispersive. Their
@@ -213,7 +249,7 @@ design points stay in `topological/data/`.
 
 The `3d/` notebooks are the third exception: true 3D FDTD (fdtdx) on the
 real cross-section with real bulk indices, still non-dispersive. Their results
-live in `3d/data/`, never in `data/design_points/`, so the 2D SAX models
+live in `3d/data/`, never in `si/data/design_points/`, so the 2D SAX models
 cannot pick them up (see [3d/README.md](3d/README.md)).
 
 These are deliberate, stated Phase-1 simplifications, not oversights — see

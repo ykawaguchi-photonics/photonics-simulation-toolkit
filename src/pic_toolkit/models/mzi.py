@@ -2,16 +2,12 @@
 
 Architectural rule: this file NEVER imports meep, and NEVER launches an FDTD
 simulation -- same rule as models/coupler.py, models/racetrack.py, etc. It
-reads the cached, validated artifact that notebooks/07_mzi.ipynb already
+reads the cached, validated artifact that si/notebooks/07_mzi.ipynb already
 produced and selected, via the design point that names it.
 
-Unlike models/coupler.py (which can only return sqrt(power) -- zero-phase --
-S-parameters, an explicitly documented simplification), this model returns
-genuine COMPLEX S-parameters directly, since meep_sim.mzi.simulate_baseline
-records real phase, not just power. This is what makes a standalone SAX
-composition of two coupler stages + an analytic arm phase term unnecessary:
-the whole interferometric response is already captured in one cached
-artifact.
+It returns the complex FDTD S-parameters (magnitude and phase) of the whole
+device, so the interferometric response comes from one cached full-wave
+artifact rather than from a composition of coupler and arm models.
 
 Same "duplication over a shared helper" convention models/coupler.py already
 established relative to pic_toolkit.sparams (hardcoded to a 2x2 s_matrix,
@@ -32,7 +28,7 @@ from .. import design_points
 assert "meep" not in sys.modules, "pic_toolkit.models.mzi must never coexist with a meep import"
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DESIGN_POINT_PATH = _REPO_ROOT / "data" / "design_points" / "mzi.yaml"
+_DESIGN_POINT_PATH = _REPO_ROOT / "si" / "data" / "design_points" / "mzi.yaml"
 
 
 def _resolve_artifact_stem(design_point: dict) -> Path:
@@ -49,7 +45,7 @@ def _load_mzi_artifact(path_stem: Path) -> dict:
     if not npz_path.exists() or not json_path.exists():
         raise FileNotFoundError(
             f"MZI artifact not found at {path_stem}(.npz/.json). "
-            "Run notebooks/07_mzi.ipynb first to generate it."
+            "Run si/notebooks/07_mzi.ipynb first to generate it."
         )
     data = np.load(npz_path)
     metadata = json.loads(json_path.read_text())
@@ -79,7 +75,7 @@ def _interp_complex(wl, wl_grid, values):
 def _interp_complex_mag_phase(wl, wl_grid, values):
     # Separate, magnitude+unwrapped-phase interpolator for mzi_at_sweep_point
     # below -- NOT used by mzi() above, whose own _interp_complex (real/imag)
-    # is left unchanged. Measured directly across all 6 data/sparams/mzi/
+    # is left unchanged. Measured directly across all 6 si/data/sparams/mzi/
     # sweep/mzi_deltaL*.npz artifacts: S41's phase already winds up to ~63deg
     # between adjacent wavelength grid points -- close to the ~114deg
     # independently found (models/mzi_arm.py, models/coupler.py) to cause a
@@ -102,7 +98,7 @@ def mzi(wl=1.35):
     4 ports (in_top, in_bot, out_top, out_bot), with genuine complex
     (magnitude and phase) S-parameters.
 
-    Loads the cached artifact referenced by data/design_points/mzi.yaml.
+    Loads the cached artifact referenced by si/data/design_points/mzi.yaml.
     """
     design_point = design_points.load_design_point(_DESIGN_POINT_PATH)
     artifact_stem = _resolve_artifact_stem(design_point)
@@ -130,8 +126,8 @@ def mzi(wl=1.35):
 
 def mzi_at_sweep_point(delta_L_um: float, wl=1.35) -> dict:
     """SAX model function for an MZI at a delta_L_um OTHER than the single
-    selected design point -- reads directly from `notebooks/07_mzi.ipynb`'s
-    own Section 10 sweep artifacts (`data/sparams/mzi/sweep/
+    selected design point -- reads directly from `si/notebooks/07_mzi.ipynb`'s
+    own Section 10 sweep artifacts (`si/data/sparams/mzi/sweep/
     mzi_deltaL<X>.npz`), which that notebook's own sweep loop calls
     `simulate_baseline()` for (same complex S_* fields as the selected point,
     not a separate/lesser measurement). Generalizes this module the same way
@@ -149,7 +145,7 @@ def mzi_at_sweep_point(delta_L_um: float, wl=1.35) -> dict:
     FileNotFoundError with a clear message otherwise, listing what exists,
     rather than silently interpolating between physically distinct
     geometries)."""
-    stem = _REPO_ROOT / "data" / "sparams" / "mzi" / "sweep" / f"mzi_deltaL{delta_L_um}"
+    stem = _REPO_ROOT / "si" / "data" / "sparams" / "mzi" / "sweep" / f"mzi_deltaL{delta_L_um}"
     npz_path = stem.parent / (stem.name + ".npz")
     if not npz_path.exists():
         available = sorted(p.stem.replace("mzi_deltaL", "") for p in stem.parent.glob("mzi_deltaL*.npz"))

@@ -35,5 +35,5 @@ dependencies:
       - autograd
       - nlopt
       # autograd + nlopt back meep.adjoint's topology optimization, used by
-      # notebooks/03_bend_topology_optimization.ipynb (gradient-based
+      # si/notebooks/03_bend_topology_optimization.ipynb (gradient-based
       # MaterialGrid density optimization via NLopt's MMA algorithm).

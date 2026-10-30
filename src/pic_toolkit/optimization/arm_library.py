@@ -35,17 +35,17 @@ from .. import design_points, sparams
 assert "meep" not in sys.modules, "pic_toolkit.optimization.arm_library must never coexist with a meep import"
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_WAVEGUIDE_DESIGN_POINT = _REPO_ROOT / "data" / "design_points" / "waveguide.yaml"
+_WAVEGUIDE_DESIGN_POINT = _REPO_ROOT / "si" / "data" / "design_points" / "waveguide.yaml"
 
 _LIBRARY_DIRS_BY_RADIUS = {
     5.0: [
-        _REPO_ROOT / "data" / "sparams" / "mzi_arm" / "sweep",
-        _REPO_ROOT / "data" / "sparams" / "mzi_arm" / "baseline",
-        _REPO_ROOT / "data" / "sparams" / "mzi_arm" / "sweep_dense2um",
+        _REPO_ROOT / "si" / "data" / "sparams" / "mzi_arm" / "sweep",
+        _REPO_ROOT / "si" / "data" / "sparams" / "mzi_arm" / "baseline",
+        _REPO_ROOT / "si" / "data" / "sparams" / "mzi_arm" / "sweep_dense2um",
     ],
     2.5: [
-        _REPO_ROOT / "data" / "sparams" / "mzi_arm" / "sweep_r2.5",
-        _REPO_ROOT / "data" / "sparams" / "mzi_arm" / "sweep_r2p5_dense",
+        _REPO_ROOT / "si" / "data" / "sparams" / "mzi_arm" / "sweep_r2.5",
+        _REPO_ROOT / "si" / "data" / "sparams" / "mzi_arm" / "sweep_r2p5_dense",
     ],
 }
 

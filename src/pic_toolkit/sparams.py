@@ -67,7 +67,7 @@ def load_artifact(path_stem: Path) -> SparamArtifact:
     if not npz_path.exists() or not json_path.exists():
         raise FileNotFoundError(
             f"S-parameter artifact not found at {path_stem}(.npz/.json). "
-            "Run notebooks/01_waveguide_baseline.ipynb first to generate it."
+            "Run si/notebooks/01_waveguide_baseline.ipynb first to generate it."
         )
 
     data = np.load(npz_path)

@@ -22,7 +22,7 @@ validation functions (`energy_conservation_check`, `reciprocity_check`,
 (`save_artifact`/`load_artifact`), all shaped for (T_through, T_cross,
 R_reflect) x (in_top, in_bot) rather than a 2x2 s_matrix. `pic_toolkit.viz`
 (`plot_permittivity`/`plot_field`) and `pic_toolkit.sweep.save_manifest` ARE
-generic enough to reuse as-is (see notebooks/06_directional_coupler.ipynb).
+generic enough to reuse as-is (see si/notebooks/06_directional_coupler.ipynb).
 
 Only this file (plus `waveguide.py`, `bend.py`, `bend_topopt.py`, `the since-removed ring.py`,
 `racetrack.py`) imports meep.
@@ -84,7 +84,7 @@ DEFAULT_PARAMS = {
                                   # wl0_um=1.35) -- 06_directional_coupler.ipynb's Section 10
                                   # sweep + Section 11 interpolation is what actually
                                   # (re)discovers and saves the precise 50:50 value to
-                                  # data/design_points/coupler.yaml. Re-measured after
+                                  # si/data/design_points/coupler.yaml. Re-measured after
                                   # eig_parity was forced to mp.TE (NO_PARITY had
                                   # selected TM).
     "gap_um": 0.2,                # coupling-region edge-to-edge gap. Matches racetrack.py's
@@ -656,7 +656,7 @@ def load_artifact(path_stem) -> CouplerArtifact:
     if not npz_path.exists() or not json_path.exists():
         raise FileNotFoundError(
             f"Coupler artifact not found at {path_stem}(.npz/.json). "
-            "Run notebooks/06_directional_coupler.ipynb first to generate it."
+            "Run si/notebooks/06_directional_coupler.ipynb first to generate it."
         )
     data = np.load(npz_path)
     metadata = json.loads(json_path.read_text())

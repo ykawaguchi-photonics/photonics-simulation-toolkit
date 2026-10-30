@@ -45,10 +45,10 @@ assert "meep" not in sys.modules, "pic_toolkit.optimization.coupler_library must
 from .. import design_points  # noqa: E402  (after the meep-free assert, matching arm_library.py's own ordering)
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_WAVEGUIDE_DESIGN_POINT = _REPO_ROOT / "data" / "design_points" / "waveguide.yaml"
+_WAVEGUIDE_DESIGN_POINT = _REPO_ROOT / "si" / "data" / "design_points" / "waveguide.yaml"
 _LIBRARY_DIRS = [
-    _REPO_ROOT / "data" / "sparams" / "coupler" / "sweep",
-    # NOTE: data/sparams/coupler/selected/ (the 13.848um 50:50 point) is
+    _REPO_ROOT / "si" / "data" / "sparams" / "coupler" / "sweep",
+    # NOTE: si/data/sparams/coupler/selected/ (the 13.848um 50:50 point) is
     # deliberately NOT merged in -- it was re-simulated in a separate run
     # from the uniform 7-point sweep and was found to carry a spurious
     # ~96deg absolute phase offset relative to its 14.0um neighbor despite
@@ -155,7 +155,7 @@ def load_coupler_length_library(library_dirs: list[Path] | None = None,
         dirs = _LIBRARY_DIRS if library_dirs is None else library_dirs
         raise FileNotFoundError(
             f"No coupler artifacts found under {[str(d) for d in dirs]}. "
-            "Run notebooks/06_directional_coupler.ipynb first."
+            "Run si/notebooks/06_directional_coupler.ipynb first."
         )
 
     entries = [(_load_raw_artifact(stem), stem) for stem in stems]

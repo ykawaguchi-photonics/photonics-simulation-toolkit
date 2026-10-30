@@ -19,7 +19,7 @@ import jax.numpy as jnp
 from .. import design_points
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DESIGN_POINT_PATH = _REPO_ROOT / "data" / "design_points" / "waveguide.yaml"
+_DESIGN_POINT_PATH = _REPO_ROOT / "si" / "data" / "design_points" / "waveguide.yaml"
 _PORT_NAMES = ("o1", "o2")
 
 

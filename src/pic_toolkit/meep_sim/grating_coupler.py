@@ -118,7 +118,7 @@ DEFAULT_PARAMS = {
 
     # --- grating geometry ---
     "etch_depth_um": 0.14,         # PROMOTED from a 6x6 etch_depth_um x duty_cycle grid
-                                    # search (notebooks/09_grating_coupler.ipynb Section
+                                    # search (si/notebooks/09_grating_coupler.ipynb Section
                                     # 5.3) at n_periods=22, resolution=40 -- the highest
                                     # MEAN coupling_efficiency across the full analyzed
                                     # O-band of the 36 points tried (28.6%, peak 40.7% at
@@ -921,7 +921,7 @@ def load_artifact(path_stem) -> GratingCouplerArtifact:
     if not npz_path.exists() or not json_path.exists():
         raise FileNotFoundError(
             f"Grating coupler artifact not found at {path_stem}(.npz/.json). "
-            "Run notebooks/08_grating_coupler.ipynb first to generate it."
+            "Run si/notebooks/08_grating_coupler.ipynb first to generate it."
         )
     data = np.load(npz_path)
     metadata = json.loads(json_path.read_text())

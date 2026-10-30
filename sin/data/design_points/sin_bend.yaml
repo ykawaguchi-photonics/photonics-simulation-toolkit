@@ -1,0 +1,77 @@
+component: sin_bend
+parameters:
+  radius_um: 20.0
+  arm_length_um: 3.0
+  wg_width_um: 0.9
+  sin_thickness_um: 0.4
+  core_index: 1.765
+  clad_index: 1.44
+  bend_type: euler
+  design_loss_db: 0.05
+source_artifacts:
+  circular: sin/data/sparams/sin_bend/baseline/sin_bend_baseline_circular
+  euler: sin/data/sparams/sin_bend/baseline/sin_bend_baseline_euler
+fitted_model:
+  circular:
+    loss_db_floor: 0.04740687127353291
+    loss_db_amplitude: 13.3872833791601
+    loss_db_decay_um: 3.1341512265766984
+    phase_slope: 12.22756238873084
+    phase_intercept: 0.9593421818230556
+  euler:
+    loss_db_floor: 0.0006574268221581574
+    loss_db_amplitude: 44.83347686124449
+    loss_db_decay_um: 2.292953010514563
+    phase_slope: 12.944357737276356
+    phase_intercept: 1.2431808844874432
+fit_range_um:
+- 5.0
+- 30.0
+provenance:
+  method: baseline_plus_radius_sweep_fit
+  date: '2026-10-29'
+  meep_version: 1.34.0
+validation:
+  circular:
+    energy_conservation:
+      max_deviation_port1: 0.0
+      max_deviation_port2: 0.0
+      max_deviation: 0.0
+      max_loss_fraction_allowed: 0.15
+      tolerance: 0.08
+      passed: true
+    reciprocity:
+      max_diff_s12_s21: 1.6459846355226393e-06
+      max_diff_s11_s22: 3.481783509168859e-05
+      max_diff: 3.481783509168859e-05
+      tolerance: 0.1
+      passed: true
+    passivity:
+      max_magnitude: 0.979481199968669
+      tolerance: 0.02
+      passed: true
+    passed: true
+  euler:
+    energy_conservation:
+      max_deviation_port1: 0.0
+      max_deviation_port2: 0.0
+      max_deviation: 0.0
+      max_loss_fraction_allowed: 0.15
+      tolerance: 0.08
+      passed: true
+    reciprocity:
+      max_diff_s12_s21: 2.619970861462746e-06
+      max_diff_s11_s22: 4.721873500497922e-05
+      max_diff: 4.721873500497922e-05
+      tolerance: 0.1
+      passed: true
+    passivity:
+      max_magnitude: 0.9948161798279265
+      tolerance: 0.02
+      passed: true
+    passed: true
+rationale: 'Baselines validated at radius_um=15 for both bend types. Loss (relative-error
+  weighted exponential + floor) and phase (straight-guide term removed before unwrapping,
+  so phase_slope is the true dphi/dR) fit per bend type from a 5-30 um radius sweep
+  at resolution 40. Design radius: smallest swept radius with <= 0.05 dB per 90 deg
+  for the better bend type.'

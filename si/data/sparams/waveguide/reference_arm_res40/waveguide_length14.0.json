@@ -1,0 +1,51 @@
+{
+  "component": "waveguide_reference_arm",
+  "purpose": "straight reference for mzi_arm radius_um=2.5 (same monitor-plane separation)",
+  "geometry_params": {
+    "wg_width_um": 0.5,
+    "length_um": 14.0
+  },
+  "material_params": {
+    "core_index": 2.7,
+    "clad_index": 1.44
+  },
+  "meep_resolution": 40,
+  "simulation_params": {
+    "wl_min_um": 1.3,
+    "wl_max_um": 1.4,
+    "n_freq": 21,
+    "dpml_um": 1.0,
+    "cell_x_um": 18.0,
+    "cell_y_um": 4.0,
+    "port_offset_um": 7.0,
+    "source_offset_um": 7.5
+  },
+  "meep_version": "1.34.0",
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_port1": 3.1397975176594706e-05,
+      "max_deviation_port2": 3.586784688236477e-05,
+      "max_deviation": 3.586784688236477e-05,
+      "max_loss_fraction_allowed": 0.0,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_s12_s21": 4.034692480287449e-06,
+      "max_diff_s11_s22": 1.0293845645414672e-06,
+      "max_diff": 4.034692480287449e-06,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "passivity": {
+      "max_magnitude": 1.0000059161371198,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "passed": true
+  },
+  "port_names": [
+    "o1",
+    "o2"
+  ]
+}

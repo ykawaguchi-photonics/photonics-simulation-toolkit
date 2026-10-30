@@ -1,0 +1,70 @@
+component: racetrack
+parameters:
+  radius_um: 5.0
+  gap_um: 0.2
+  coupling_length_um: 10.0
+  wg_width_um: 0.5
+  wg_height_um: 0.22
+  core_index: 2.7
+  clad_index: 1.44
+  ring_conductivity: 0.001
+source_artifact: si/data/sparams/racetrack/sweep/racetrack_coupling_length10.0
+provenance:
+  method: sweep_selection_critical_coupling
+  date: '2026-10-28'
+  meep_version: 1.34.0
+validation:
+  energy_conservation:
+    port1:
+      off_resonance_baseline: 0.9903137462443072
+      n_off_resonance_points: 138
+      n_resonance_points: 264
+      off_resonance_deviation: 0.013036398065746524
+      max_physicality_excess: 0.0
+      passed: true
+    port2:
+      off_resonance_baseline: 0.9902849645940284
+      n_off_resonance_points: 138
+      n_resonance_points: 264
+      off_resonance_deviation: 0.01303347023845669
+      max_physicality_excess: 0.0
+      passed: true
+    off_resonance_tol: 0.02
+    min_dip_depth: 0.1
+    passivity_tol: 0.01
+    passed: true
+  reciprocity:
+    max_diff_s12_s21: 0.0274638899809787
+    max_diff_s11_s22: 0.1441941821342074
+    max_diff: 0.1441941821342074
+    tolerance: 0.35
+    passed: true
+  passivity:
+    max_magnitude: 0.9969368450171061
+    tolerance: 0.01
+    passed: true
+  passed: true
+rationale: 'Selected from the Section-9 coupling-length sweep ([2.0, 2.5, 3.0, 3.5,
+  4.0, 6.0, 8.0, 9.0, 10.0, 11.0, 12.0] um, 1.3050-1.3200 um, n_freq=402) as the deepest
+  on-resonance dip (|S21|^2=0.001): t=0.9161 vs a=0.9161, kappa^2=0.1608 vs critical
+  1-a^2=0.1608 (critically coupled, Section 10). Shorter coupling sections are under-coupled,
+  longer ones over-coupled.'
+fitted_model:
+  radius_um: 5.0
+  coupling_length_um: 10.0
+  t: 0.9160851749770995
+  kappa: 0.4009837305766619
+  a: 0.9160846862706394
+  alpha: 0.0034093119477186357
+  n_g: 2.9781053616743796
+  lambda_res_um: 1.313349461218402
+  regime: critically coupled
+  branch_reason: measured phase swing 4.85 rad >= pi -> over-coupled; |t - a| = 0.0000
+    < 0.005 -> critically coupled (both branches coincide)
+  fit_method: all-pass coupling-matrix model fitted to the narrowband FDTD resonance
+    (least squares on |S21|^2, free t, a, resonance frequency and a near-unity scale),
+    with the round-trip phase linearized by the group index measured from the full-band
+    free spectral range (Section 6). Both t<->a branches fitted; the branch is chosen
+    from the measured S21 phase swing and the conductivity absorption floor (Section
+    10). See pic_toolkit.ring_fit.
+  fit_residual_rms: 0.0014027899925583695

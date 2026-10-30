@@ -2,7 +2,7 @@
 
 Architectural rule: this file NEVER imports meep, and NEVER launches an FDTD
 simulation -- same rule as models/racetrack.py, models/waveguide.py, etc. It
-reads the cached, validated artifact that notebooks/06_directional_coupler.ipynb
+reads the cached, validated artifact that si/notebooks/06_directional_coupler.ipynb
 already produced and selected, via the design point that names it.
 
 Unlike models/racetrack.py, this does NOT import pic_toolkit.sparams
@@ -36,7 +36,7 @@ from .. import design_points
 assert "meep" not in sys.modules, "pic_toolkit.models.coupler must never coexist with a meep import"
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DESIGN_POINT_PATH = _REPO_ROOT / "data" / "design_points" / "coupler.yaml"
+_DESIGN_POINT_PATH = _REPO_ROOT / "si" / "data" / "design_points" / "coupler.yaml"
 
 
 def _resolve_artifact_stem(design_point: dict) -> Path:
@@ -54,7 +54,7 @@ def _load_coupler_artifact(path_stem: Path) -> dict:
     if not npz_path.exists() or not json_path.exists():
         raise FileNotFoundError(
             f"Coupler artifact not found at {path_stem}(.npz/.json). "
-            "Run notebooks/06_directional_coupler.ipynb first to generate it."
+            "Run si/notebooks/06_directional_coupler.ipynb first to generate it."
         )
     data = np.load(npz_path)
     metadata = json.loads(json_path.read_text())
@@ -115,7 +115,7 @@ def coupler(wl=1.35):
     4 ports (in_top, in_bot, out_top, out_bot), with genuine complex
     (magnitude and phase) S-parameters.
 
-    Loads the cached artifact referenced by data/design_points/coupler.yaml
+    Loads the cached artifact referenced by si/data/design_points/coupler.yaml
     (the selected 50:50 design, coupling_length_um~=13.848). `simulate_
     baseline()` only excites in_top/in_bot (out_top/out_bot are output-only
     in this component's 50:50-splitter use case), so the reverse direction of
@@ -132,8 +132,8 @@ def coupler(wl=1.35):
 def coupler_at_sweep_point(coupling_length_um: float, wl=1.35) -> dict:
     """SAX model function for a coupler at a DIFFERENT coupling_length_um than
     the single selected 50:50 design point -- reads directly from
-    `notebooks/06_directional_coupler.ipynb`'s own Section 10 sweep artifacts
-    (`data/sparams/coupler/sweep/coupler_couplinglength<Lc>.npz`), which
+    `si/notebooks/06_directional_coupler.ipynb`'s own Section 10 sweep artifacts
+    (`si/data/sparams/coupler/sweep/coupler_couplinglength<Lc>.npz`), which
     `meep_sim.coupler.py`'s own sweep loop calls `simulate_baseline()` for
     (same complex S_* fields as the selected point, not a separate/lesser
     measurement). No design point YAML exists for these (they were never
@@ -148,7 +148,7 @@ def coupler_at_sweep_point(coupling_length_um: float, wl=1.35) -> dict:
     (raises FileNotFoundError with a clear message otherwise, listing what
     exists, rather than silently interpolating between physically distinct
     geometries)."""
-    stem = _REPO_ROOT / "data" / "sparams" / "coupler" / "sweep" / f"coupler_couplinglength{coupling_length_um}"
+    stem = _REPO_ROOT / "si" / "data" / "sparams" / "coupler" / "sweep" / f"coupler_couplinglength{coupling_length_um}"
     npz_path = stem.parent / (stem.name + ".npz")
     if not npz_path.exists():
         available = sorted(p.stem.replace("coupler_couplinglength", "")

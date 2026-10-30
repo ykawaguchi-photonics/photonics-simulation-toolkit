@@ -2,7 +2,7 @@
 
 Architectural rule: this file NEVER imports meep, and NEVER launches an FDTD
 simulation. It only reads the cached, validated S-parameter artifact that
-`notebooks/03_mzi_arm.ipynb` already produced (the representative baseline at
+`si/notebooks/03_mzi_arm.ipynb` already produced (the representative baseline at
 `delta_L_um=15.0`), via the design point that names it.
 
 Same shape as `models/bend_topopt.py` -- the artifact was saved via the shared
@@ -23,7 +23,7 @@ from .. import design_points, sparams
 assert "meep" not in sys.modules, "pic_toolkit.models.mzi_arm must never coexist with a meep import"
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DESIGN_POINT_PATH = _REPO_ROOT / "data" / "design_points" / "mzi_arm.yaml"
+_DESIGN_POINT_PATH = _REPO_ROOT / "si" / "data" / "design_points" / "mzi_arm.yaml"
 
 
 def _resolve_artifact_stem(design_point: dict) -> Path:
@@ -46,7 +46,7 @@ def _interp_complex(wl, wl_grid, s_grid):
     # interpolating real/imaginary parts independently across a step that
     # large cuts the chord across the true circular arc, UNDERESTIMATING
     # magnitude between grid points -- confirmed empirically: composing this
-    # component into circuits/mzi_real_fdtd_sax.ipynb's SAX circuit with the
+    # component into circuits/wdm_sax.ipynb's SAX circuit with the
     # old real/imag interpolation produced a spurious total-power deficit up
     # to ~40%, oscillating with exactly this artifact's own 5nm grid spacing;
     # switching to magnitude+phase interpolation removed it entirely.
@@ -65,7 +65,7 @@ def mzi_arm(wl=1.35):
     """SAX model function: wavelength (um, scalar or array) -> SDict over the
     2 ports (o1, o2), genuine complex (magnitude and phase) S-parameters.
 
-    Loads the cached artifact referenced by data/design_points/mzi_arm.yaml --
+    Loads the cached artifact referenced by si/data/design_points/mzi_arm.yaml --
     the representative baseline geometry at delta_L_um=15.0 (matching the
     SAX-designed lattice-filter notebook). Never runs a new simulation, and
     does not interpolate across delta_L_um -- unlike wavelength, delta_L_um
@@ -90,14 +90,14 @@ def mzi_arm(wl=1.35):
 
 # radius_um -> the sweep subdirectory holding that radius's own extra_straight_um-tagged
 # artifacts. `03_mzi_arm.ipynb` Section 10's own sweep only ever varied extra_straight_um at
-# a single fixed radius_um=5.0 (data/sparams/mzi_arm/sweep/) -- its floor delta_L (13.272um)
+# a single fixed radius_um=5.0 (si/data/sparams/mzi_arm/sweep/) -- its floor delta_L (13.272um)
 # cannot reach the Mux4 tree's own stage2 targets (7.5/7.64um), so a second radius (2.5um,
 # floor 6.632um) was swept separately into its own directory to avoid any filename ambiguity
 # with the existing radius=5.0 points (grid_sweep's own tag encodes only the SWEPT param,
 # extra_straight_um, not radius_um).
 _SWEEP_DIRS_BY_RADIUS = {
-    5.0: _REPO_ROOT / "data" / "sparams" / "mzi_arm" / "sweep",
-    2.5: _REPO_ROOT / "data" / "sparams" / "mzi_arm" / "sweep_r2.5",
+    5.0: _REPO_ROOT / "si" / "data" / "sparams" / "mzi_arm" / "sweep",
+    2.5: _REPO_ROOT / "si" / "data" / "sparams" / "mzi_arm" / "sweep_r2.5",
 }
 
 
@@ -136,6 +136,39 @@ def mzi_arm_at_sweep_point(extra_straight_um: float, radius_um: float = 5.0, wl=
     wl_grid = artifact.wavelengths_um
     o1, o2 = artifact.port_names
 
+    return {
+        (o1, o1): _interp_complex(wl, wl_grid, artifact.s_matrix["11"]),
+        (o1, o2): _interp_complex(wl, wl_grid, artifact.s_matrix["12"]),
+        (o2, o1): _interp_complex(wl, wl_grid, artifact.s_matrix["21"]),
+        (o2, o2): _interp_complex(wl, wl_grid, artifact.s_matrix["22"]),
+    }
+
+
+_REFERENCE_DIR = _REPO_ROOT / "si" / "data" / "sparams" / "waveguide" / "reference_arm_res40"
+# monitor-plane separation of the jog at each radius: 4*radius + 2*lead_len - 2*port_offset
+_REFERENCE_LENGTH_BY_RADIUS = {5.0: 24.0, 2.5: 14.0}
+
+
+def straight_reference(wl=1.35, radius_um: float = 5.0) -> dict:
+    """SAX model function for the straight reference arm that pairs with an
+    mzi_arm jog of the given `radius_um` in a lattice stage.
+
+    It is a 2D FDTD straight waveguide (`scripts/simulate_reference_arms.py`)
+    simulated with the jog's own solver settings: resolution 40, the same band
+    and frequency sampling, and the same separation between the mode-monitor
+    planes (24 um for radius 5, 14 um for radius 2.5). Pairing it with the jog
+    makes the two arms consistent: phase they share cancels in the
+    interference, and both carry the same grid dispersion. (The analytic
+    `models.waveguide` uses n_eff from a resolution-20 cutback fit, so mixing
+    it with the resolution-40 jog would add a spurious, wavelength-dependent
+    phase to every stage.)"""
+    if radius_um not in _REFERENCE_LENGTH_BY_RADIUS:
+        raise ValueError(f"No reference arm for radius_um={radius_um}. "
+                         f"Available: {sorted(_REFERENCE_LENGTH_BY_RADIUS)}")
+    stem = _REFERENCE_DIR / f"waveguide_length{_REFERENCE_LENGTH_BY_RADIUS[radius_um]}"
+    artifact = sparams.load_artifact(stem)
+    wl_grid = artifact.wavelengths_um
+    o1, o2 = artifact.port_names
     return {
         (o1, o1): _interp_complex(wl, wl_grid, artifact.s_matrix["11"]),
         (o1, o2): _interp_complex(wl, wl_grid, artifact.s_matrix["12"]),

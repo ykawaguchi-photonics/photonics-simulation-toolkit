@@ -1,0 +1,64 @@
+{
+  "component": "mzi",
+  "study": "fabrication_tolerance",
+  "method": "sax_circuit_coupler_fdtd_plus_calibrated_arm_phase",
+  "nominal_design_point": "si/data/design_points/mzi.yaml",
+  "bias_tol_um": 0.01,
+  "correlation_model": "single_cd_bias_anti_correlated_width_gap",
+  "sampling": "deterministic_step_sweep",
+  "bias_step_nm": 5,
+  "n_points": 5,
+  "resolution": 50,
+  "calibration_a": -0.015568347487782954,
+  "calibration_b": -0.004363769906288735,
+  "n_passed": 5,
+  "summary_statistics": {
+    "dip_near_center_um": {
+      "mean": 1.335425783189404,
+      "std": 0.003462629829755795,
+      "min": 1.3302346977021375,
+      "max": 1.3399640133474984,
+      "n": 5
+    },
+    "fsr_um": {
+      "mean": 0.05069611574090764,
+      "std": 0.0003264608272906738,
+      "min": 0.05021485391267211,
+      "max": 0.051136290703640785,
+      "n": 5
+    },
+    "extinction_db": {
+      "mean": 49.00801232076869,
+      "std": 0.5125854334395823,
+      "min": 48.26210095074613,
+      "max": 49.86110922321201,
+      "n": 5
+    },
+    "power_S31_at_wl0": {
+      "mean": 0.37602035105228426,
+      "std": 0.19970308068557144,
+      "min": 0.094035804271698,
+      "max": 0.6488697528839111,
+      "n": 5
+    },
+    "power_S41_at_wl0": {
+      "mean": 0.6239573717117309,
+      "std": 0.19968589432695794,
+      "min": 0.3511269986629486,
+      "max": 0.9058964252471924,
+      "n": 5
+    }
+  },
+  "nominal": {
+    "dips_um": [
+      1.3359161498615673,
+      1.3866623228603363
+    ],
+    "fsr_um": 0.050746172998769046,
+    "dip_near_center_um": 1.3359161498615673,
+    "extinction_db": 39.10729928813603,
+    "power_S31_at_wl0": 0.380074440160953,
+    "power_S41_at_wl0": 0.5757426395668702
+  },
+  "null_shift_nm_per_nm_bias": 0.4877781188109909
+}

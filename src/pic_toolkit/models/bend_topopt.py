@@ -6,8 +6,7 @@ simulation. It only reads the cached, validated S-parameter artifact that the
 honest, plain forward two-port `simulate_baseline()` validation, not from the
 optimizer's own per-iteration objective), via the design point that names it.
 
-Same shape as the since-removed models/ring.py -- see that file for the general pattern this
-mirrors.
+Same shape as models/bend.py: a cached FDTD artifact named by a design point, served as an SDict.
 """
 
 from __future__ import annotations
@@ -22,7 +21,7 @@ from .. import design_points, sparams
 assert "meep" not in sys.modules, "pic_toolkit.models.bend_topopt must never coexist with a meep import"
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DESIGN_POINT_PATH = _REPO_ROOT / "data" / "design_points" / "bend_topopt.yaml"
+_DESIGN_POINT_PATH = _REPO_ROOT / "si" / "data" / "design_points" / "bend_topopt.yaml"
 
 
 def _resolve_artifact_stem(design_point: dict) -> Path:
@@ -46,7 +45,7 @@ def bend_topopt(wl=1.35):
     """SAX model function: wavelength (um, scalar or array) -> SDict.
 
     Loads the cached S-parameter artifact referenced by
-    data/design_points/bend_topopt.yaml. Never runs a new simulation.
+    si/data/design_points/bend_topopt.yaml. Never runs a new simulation.
     """
     design_point = design_points.load_design_point(_DESIGN_POINT_PATH)
     artifact_stem = _resolve_artifact_stem(design_point)

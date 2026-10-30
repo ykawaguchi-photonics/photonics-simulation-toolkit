@@ -1,0 +1,118 @@
+component: tfln_mzm
+wl0_um: 1.35
+parameters:
+  optical:
+    wl_min_um: 1.3
+    wl_max_um: 1.4
+    wl0_um: 1.35
+    film_um: 0.6
+    etch_um: 0.3
+    rib_width_um: 1.0
+    box_um: 2.0
+    air_um: 2.0
+    cell_lateral_um: 8.0
+    resolution: 32
+  electrical:
+    film_um: 0.6
+    etch_um: 0.3
+    rib_width_um: 1.0
+    box_um: 2.0
+    substrate_um: 500.0
+    gap_um: 5.0
+    signal_width_um: 20.0
+    ground_width_um: 100.0
+    metal_um: 1.0
+    sigma_metal_S_per_m: 41000000.0
+    eps_ln_c: 27.0
+    eps_ln_a: 45.0
+    eps_sio2: 3.9
+    eps_si: 11.7
+    h_fine_um: 0.025
+    growth: 1.15
+    h_max_um: 50.0
+    outer_lateral_um: 1500.0
+    outer_up_um: 1500.0
+materials:
+  n_o: 2.2183601676522224
+  n_e: 2.1437460671713318
+  n_sio2: 1.4463504523860415
+  r33_pm_per_V: 30.9
+  eps_rf_ln_c: 27.0
+  eps_rf_ln_a: 45.0
+optical:
+  n_eff: 1.9263173032778194
+  n_g_nondispersive: 2.2506074871534003
+  n_g_dispersive: 2.297345609731392
+  te_fraction: 0.9472027648176823
+  mpb_resolution: 32
+  eim_core_index: 1.994510487249157
+  eim_clad_index: 1.7939699230528785
+eo:
+  gamma: 0.5279486450320807
+  dn_eff_dV: 1.6072009519742645e-05
+  vpi_l_V_cm: 2.099924092164203
+  vpi_l_V_cm_r33_26p9: 2.41218046274624
+  direct_check_rel_diff: 0.0018163921284819473
+rf:
+  n_rf: 2.140708888217784
+  Z0_ohm: 41.23758378585351
+  C_pF_per_m: 173.158453484844
+  alpha_db_per_cm_at_100GHz: 8.71960181050037
+design:
+  arm_length_mm: 4.5
+  vpi_V: 4.666497982587118
+  f3db_GHz: 79.00055313848891
+  target_f3db_GHz: 67.0
+coupler:
+  gap_um: 0.6
+  coupling_length_um: 33.38333333333333
+  source_artifact: tfln/data/sparams/tfln_mzm/coupler/tfln_coupler_50_50
+  validation:
+    energy_conservation:
+      max_deviation_in_top: 0.0
+      max_deviation_in_bot: 0.0
+      max_deviation: 0.0
+      max_expected_loss: 0.05
+      tolerance: 0.03
+      passed: true
+    reciprocity:
+      max_diff_through: 0.0008154035345288024
+      max_diff_cross: 0.0009663739191170806
+      max_diff_reflect: 1.449086003267922e-06
+      max_diff: 0.0009663739191170806
+      tolerance: 0.03
+      passed: true
+    passivity:
+      max_power_fraction: 0.6083368772759714
+      tolerance: 0.01
+      passed: true
+    passed: true
+meep_2d_mzm:
+  delta_n_vpi: 0.004
+  phase_factor: 0.8977265547103208
+  dphi_at_vpi_pi: 1.014575156062076
+  phase_factor_realized: 0.9108110593462936
+  validation:
+    energy_conservation:
+      max_deviation_port1: 0.0
+      max_deviation_port2: 0.0
+      max_deviation: 0.0
+      max_expected_loss: 0.05
+      tolerance: 0.03
+      passed: true
+    reciprocity:
+      max_diff: 5.611280196201064e-05
+      tolerance: 0.03
+      passed: true
+    passivity:
+      max_power_fraction: 0.989735771465504
+      tolerance: 0.01
+      passed: true
+    passed: true
+provenance:
+  method: MPB cross-section + FV electrostatics + 2D FDTD (Meep)
+  date: '2026-10-24'
+  meep_version: 1.34.0
+rationale: Longest electrode meeting a 67 GHz EO 3 dB bandwidth target (200 G/lane
+  PAM4 class) at a 2 um BOX; 5 um gap balances V_pi L against metal proximity. Edit
+  directly if a different target is preferred.

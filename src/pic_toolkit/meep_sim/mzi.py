@@ -38,7 +38,7 @@ IMPORTANT ARCHITECTURAL NOTE: same reasoning as `coupler.py` -- this is a
 either. This module is self-contained (own result dataclass, own physical
 validation, own artifact save/load), matching `coupler.py`'s precedent.
 `pic_toolkit.viz` and `pic_toolkit.sweep.save_manifest` ARE generic enough
-to reuse as-is (see notebooks/07_mzi.ipynb).
+to reuse as-is (see si/notebooks/07_mzi.ipynb).
 
 Only this file (plus `waveguide.py`, `bend.py`, `bend_topopt.py`, `the since-removed ring.py`,
 `racetrack.py`, `coupler.py`) imports meep.
@@ -100,8 +100,8 @@ def _quiet_meep():
 # ---------------------------------------------------------------------------
 DEFAULT_PARAMS = {
     # --- splitter/combiner stage: reused verbatim from coupler.py's own
-    # DEFAULT_PARAMS / data/design_points/coupler.yaml (the validated 50:50
-    # point from notebooks/06_directional_coupler.ipynb) -- both MZI stages
+    # DEFAULT_PARAMS / si/data/design_points/coupler.yaml (the validated 50:50
+    # point from si/notebooks/06_directional_coupler.ipynb) -- both MZI stages
     # use this exact design, unmodified. Re-synced after coupler.py's own
     # resolution=25->40 re-measurement.
     "coupling_length_um": 13.708639452498595,
@@ -591,7 +591,7 @@ def get_permittivity_map(params: dict, use_native_geometry: bool = True) -> Perm
     original mp.Block construction every validated result in this notebook
     was measured against. `use_native_geometry=False` uses the
     gdsfactory-derived `build_geometry_from_gds` instead, for a
-    geometry-display/comparison view (see notebooks/07_mzi.ipynb's
+    geometry-display/comparison view (see si/notebooks/07_mzi.ipynb's
     Section 3/4) -- not the default, since `simulate_baseline()` itself is
     intentionally left on the native path (see `coupler.get_permittivity_
     map`'s docstring for the same reasoning, shared by this module).
@@ -681,7 +681,7 @@ def _run_one_excitation(params: dict, launch_from: str, capture_dft: bool):
     it's independently well-motivated (the estimate IS more accurate with
     it), but the residual gap itself is still an open item -- see
     DEFAULT_PARAMS["delta_L_um"]'s comment and the Section 8 discussion in
-    notebooks/07_mzi.ipynb for what's been ruled out (bend-loss geometry,
+    si/notebooks/07_mzi.ipynb for what's been ruled out (bend-loss geometry,
     reciprocity-check logic) and what's still worth checking (this module's
     own reduced testing used a coarse n_freq=7; the notebook's real
     n_freq=101 averages over far more points, and Section 7/8's full spectrum
@@ -761,6 +761,53 @@ def simulate_baseline(params: dict | None = None) -> MZIResult:
         S11=S11, S21=S21, S31=S31, S41=S41, S22=S22, S12=S12, S32=S32, S42=S42,
         permittivity=permittivity, field_snapshot=field_snapshot, sim_params=sim_params,
     )
+
+
+def load_or_simulate_baseline(params: dict | None, artifact_stem, field_cache=None) -> MZIResult:
+    """Cache-or-run wrapper around `simulate_baseline`: if `artifact_stem`(.npz/.json)
+    exists and records exactly these parameters (`metadata["simulation_params"]`, every
+    key) and `n_freq` points, rebuild the MZIResult from it (no FDTD); otherwise simulate.
+    With `field_cache` (a .pkl path) the in_top field snapshot is cached there too, keyed
+    by the same parameters. The caller still validates and saves, exactly as for a fresh
+    run. `permittivity` is None for a cached result."""
+    import pickle
+
+    from .. import artifact_cache
+
+    params = {**DEFAULT_PARAMS, **(params or {})}
+    key = {"params": params}
+    if artifact_cache.artifact_exists(artifact_stem):
+        art = load_artifact(artifact_stem)
+        recorded = art.metadata.get("simulation_params")
+        if recorded is None:
+            bad = ["no simulation_params recorded"]
+        else:
+            bad = artifact_cache.metadata_mismatches({"simulation_params": recorded}, params)
+            bad += [f"{k}: not recorded" for k in params if k not in recorded]
+        if len(art.wavelengths_um) != params["n_freq"]:
+            bad.append(f"n_freq: cached {len(art.wavelengths_um)} vs requested {params['n_freq']}")
+        if not bad:
+            print(f"loaded cached FDTD result: {artifact_stem}")
+            snapshot = None
+            if field_cache is not None:
+                snapshot = artifact_cache.cached_pickle(
+                    field_cache, key, lambda: _run_one_excitation(params, "in_top", True)[-1])
+            return MZIResult(
+                wavelengths_um=art.wavelengths_um, freqs=art.freqs,
+                S11=art.S11, S21=art.S21, S31=art.S31, S41=art.S41,
+                S22=art.S22, S12=art.S12, S32=art.S32, S42=art.S42,
+                field_snapshot=snapshot,
+                sim_params={**params, "meep_version": art.metadata.get("meep_version"),
+                            "python_version": art.metadata.get("python_version", platform.python_version()),
+                            "creation_date": art.metadata.get("creation_date"), "loaded_from": str(artifact_stem)},
+            )
+        print(f"cached artifact {artifact_stem} does not match the requested parameters, re-simulating: {bad}")
+    result = simulate_baseline(params)
+    if field_cache is not None:
+        Path(field_cache).parent.mkdir(parents=True, exist_ok=True)
+        with open(field_cache, "wb") as f:
+            pickle.dump({"key": key, "value": result.field_snapshot}, f)
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -926,7 +973,7 @@ def load_artifact(path_stem) -> MZIArtifact:
     if not npz_path.exists() or not json_path.exists():
         raise FileNotFoundError(
             f"MZI artifact not found at {path_stem}(.npz/.json). "
-            "Run notebooks/07_mzi.ipynb first to generate it."
+            "Run si/notebooks/07_mzi.ipynb first to generate it."
         )
     data = np.load(npz_path)
     metadata = json.loads(json_path.read_text())

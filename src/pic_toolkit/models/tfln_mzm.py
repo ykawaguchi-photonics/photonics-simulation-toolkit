@@ -1,11 +1,11 @@
 """SAX-compatible, VOLTAGE-dependent model of the x-cut TFLN electro-optic MZM.
 
 Architectural rule: this file NEVER imports meep (same rule as every module in
-pic_toolkit.models). It composes, by hand, quantities notebooks/11_tfln_mzm.ipynb
+pic_toolkit.models). It composes, by hand, quantities tfln/notebooks/01_tfln_mzm.ipynb
 already measured and saved:
 
 - the TFLN 50:50 directional coupler's complex S-parameters (FDTD, cached
-  artifact named in data/design_points/tfln_mzm.yaml -> coupler.source_artifact),
+  artifact named in tfln/data/design_points/tfln_mzm.yaml -> coupler.source_artifact),
   used for BOTH the splitter and the combiner;
 - the push-pull phase from the Pockels effect,
       Delta phi(V, lambda) = pi * V / V_pi(lambda),  V_pi(lambda) = (V_pi L)(lambda0) / L * lambda / lambda0,
@@ -17,7 +17,7 @@ already measured and saved:
 
 Unlike models/mzm.py (fixed at its V_pi operating point), this model takes the
 drive voltage `V` as an argument -- a DC transfer function; the RF frequency
-response is NOT part of a SAX S-matrix (see notebook 11 section 9 for it).
+response is NOT part of a SAX S-matrix (see notebook tfln/01 section 9 for it).
 Propagation loss defaults to 0 dB/cm and can be set with `loss_db_per_cm`.
 """
 
@@ -34,7 +34,7 @@ from .. import design_points
 assert "meep" not in sys.modules, "pic_toolkit.models.tfln_mzm must never coexist with a meep import"
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DESIGN_POINT_PATH = _REPO_ROOT / "data" / "design_points" / "tfln_mzm.yaml"
+_DESIGN_POINT_PATH = _REPO_ROOT / "tfln" / "data" / "design_points" / "tfln_mzm.yaml"
 
 
 def _load_coupler(stem: Path) -> dict:
@@ -42,7 +42,7 @@ def _load_coupler(stem: Path) -> dict:
     stem = stem if stem.is_absolute() else _REPO_ROOT / stem
     npz = stem.parent / (stem.name + ".npz")
     if not npz.exists():
-        raise FileNotFoundError(f"TFLN coupler artifact not found at {npz}. Run notebooks/11_tfln_mzm.ipynb first.")
+        raise FileNotFoundError(f"TFLN coupler artifact not found at {npz}. Run tfln/notebooks/01_tfln_mzm.ipynb first.")
     d = np.load(npz)
     meta = json.loads((stem.parent / (stem.name + ".json")).read_text())
     return {k: d[k] for k in ("wavelengths_um", "S_through", "S_cross", "S_through_bot", "S_cross_bot")} | {

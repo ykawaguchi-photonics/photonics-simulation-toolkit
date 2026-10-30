@@ -2,18 +2,16 @@
 
 Architectural rule: this file NEVER imports meep, and NEVER launches an FDTD
 simulation -- same rule as models/mzi.py, models/coupler.py, etc. It reads
-the cached, validated artifact that notebooks/08_mzm.ipynb already produced
+the cached, validated artifact that si/notebooks/08_mzm.ipynb already produced
 at the Vpi push-pull-ON operating point, via the design point that names it.
 
-Unlike models/coupler.py (sqrt(power)-only, zero-phase S-parameters), this
-model returns genuine COMPLEX S-parameters directly, since
-meep_sim.mzm.simulate_baseline records real phase, not just power -- same
-convention models/mzi.py already established.
+It returns the complex FDTD S-parameters (magnitude and phase), the same
+convention as models/coupler.py and models/mzi.py.
 
 This model exposes ONE fixed operating point (the cached Vpi-ON baseline);
 it does not interpolate across Delta_n the way a real voltage-driven device
 would need to. A Delta_n-dependent circuit model is future work -- see
-notebooks/08_mzm.ipynb Section 10's Delta_n sweep for the underlying
+si/notebooks/08_mzm.ipynb Section 9's Delta_n sweep for the underlying
 Meep-measured data this would be built from.
 """
 
@@ -30,7 +28,7 @@ from .. import design_points
 assert "meep" not in sys.modules, "pic_toolkit.models.mzm must never coexist with a meep import"
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DESIGN_POINT_PATH = _REPO_ROOT / "data" / "design_points" / "mzm.yaml"
+_DESIGN_POINT_PATH = _REPO_ROOT / "si" / "data" / "design_points" / "mzm.yaml"
 
 
 def _resolve_artifact_stem(design_point: dict) -> Path:
@@ -47,7 +45,7 @@ def _load_mzm_artifact(path_stem: Path) -> dict:
     if not npz_path.exists() or not json_path.exists():
         raise FileNotFoundError(
             f"MZM artifact not found at {path_stem}(.npz/.json). "
-            "Run notebooks/08_mzm.ipynb first to generate it."
+            "Run si/notebooks/08_mzm.ipynb first to generate it."
         )
     data = np.load(npz_path)
     metadata = json.loads(json_path.read_text())
@@ -77,7 +75,7 @@ def mzm(wl=1.35):
     4 ports (in_top, in_bot, out_top, out_bot), at the cached Vpi push-pull-ON
     operating point, with genuine complex (magnitude and phase) S-parameters.
 
-    Loads the cached artifact referenced by data/design_points/mzm.yaml.
+    Loads the cached artifact referenced by si/data/design_points/mzm.yaml.
     """
     design_point = design_points.load_design_point(_DESIGN_POINT_PATH)
     artifact_stem = _resolve_artifact_stem(design_point)

@@ -1,7 +1,7 @@
 """JAX-differentiable 2D (gap_um, coupling_length_um) coupler interpolation
 surrogate -- extends `coupler_library.py`'s existing 1D (length-only, fixed
 gap=0.2) surrogate to a genuine second free variable, using the new
-`data/sparams/coupler/sweep_2d/` grid (gaps 0.08-0.35um).
+`si/data/sparams/coupler/sweep_2d/` grid (gaps 0.08-0.35um).
 
 Architectural rule: meep-free, matching `coupler_library.py`'s own rule.
 
@@ -50,8 +50,8 @@ assert "meep" not in sys.modules, "pic_toolkit.optimization.coupler_library_2d m
 from . import coupler_library as cl  # noqa: E402  (after the meep-free assert, matching coupler_library.py's own ordering)
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_SWEEP_1D_DIR = _REPO_ROOT / "data" / "sparams" / "coupler" / "sweep"       # gap=0.20 only (implicit)
-_SWEEP_2D_DIR = _REPO_ROOT / "data" / "sparams" / "coupler" / "sweep_2d"    # gaps 0.08-0.35 (explicit gap_um)
+_SWEEP_1D_DIR = _REPO_ROOT / "si" / "data" / "sparams" / "coupler" / "sweep"       # gap=0.20 only (implicit)
+_SWEEP_2D_DIR = _REPO_ROOT / "si" / "data" / "sparams" / "coupler" / "sweep_2d"    # gaps 0.08-0.35 (explicit gap_um)
 _DEDUP_TOL_GAP_UM = 1e-6
 
 

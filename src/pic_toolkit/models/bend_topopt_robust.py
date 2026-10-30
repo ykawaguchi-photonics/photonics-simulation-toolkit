@@ -28,7 +28,7 @@ from .. import design_points, sparams
 assert "meep" not in sys.modules, "pic_toolkit.models.bend_topopt_robust must never coexist with a meep import"
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DESIGN_POINT_PATH = _REPO_ROOT / "data" / "design_points" / "bend_topopt_robust.yaml"
+_DESIGN_POINT_PATH = _REPO_ROOT / "si" / "data" / "design_points" / "bend_topopt_robust.yaml"
 
 
 def _resolve_artifact_stem(design_point: dict) -> Path:
@@ -52,7 +52,7 @@ def bend_topopt_robust(wl=1.35):
     """SAX model function: wavelength (um, scalar or array) -> SDict.
 
     Loads the cached S-parameter artifact referenced by
-    data/design_points/bend_topopt_robust.yaml (the NOMINAL sub-design's
+    si/data/design_points/bend_topopt_robust.yaml (the NOMINAL sub-design's
     honest measurement). Never runs a new simulation.
     """
     design_point = design_points.load_design_point(_DESIGN_POINT_PATH)

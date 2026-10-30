@@ -29,7 +29,7 @@ from pathlib import Path
 import numpy as np
 
 _REPO = Path(__file__).resolve().parents[1]
-_OUT = _REPO / "data" / "sparams" / "bend_topopt_robust" / "conventional_reference"
+_OUT = _REPO / "si" / "data" / "sparams" / "bend_topopt_robust" / "conventional_reference"
 
 from pic_toolkit.meep_sim import bend_topopt, bend_topopt_robust as btr  # noqa: E402
 

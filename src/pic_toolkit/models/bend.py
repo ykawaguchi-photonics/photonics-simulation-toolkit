@@ -16,7 +16,7 @@ import numpy as np
 from .. import design_points, sparams
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DESIGN_POINT_PATH = _REPO_ROOT / "data" / "design_points" / "bend.yaml"
+_DESIGN_POINT_PATH = _REPO_ROOT / "si" / "data" / "design_points" / "bend.yaml"
 
 # gdsfactory's own bend components (see meep_sim/bend.py's build_gf_component)
 # always name their two ports this way -- fixed here rather than read from
@@ -34,8 +34,12 @@ def bend(wl=1.35, radius_um: float | None = None, bend_type: str = "circular"):
     to a noise floor -- bend loss falls off steeply at small radius and
     flattens out at large radius, which a straight line cannot represent) and
     phase is a straight-line fit against radius_um (phase scales with arc
-    length, which is already linear in radius). Both are fit independently
-    per bend_type against a 9-point radius sweep -- see notebooks/
+    length, which is already linear in radius). The fit removes the
+    straight-guide phase (beta0 times the bend's centre-line length; pi*R/2 is
+    enough at the Si sweep's 0.25um steps, the SiN sweep's 5um steps need the
+    Euler bend's own 1.664*R) before unwrapping, so `phase_slope` is the true
+    dphi/dR, not an alias that is right only at the swept radii. Both are fit independently
+    per bend_type against a 9-point radius sweep -- see si/notebooks/
     02_bent_waveguide.ipynb Section 5. S11/S22 are modeled as exactly
     zero, the same simplification models/waveguide.py makes.
 
@@ -55,15 +59,22 @@ def bend(wl=1.35, radius_um: float | None = None, bend_type: str = "circular"):
         the default, which build_gf_component uses -- keeps the same
         footprint as a circular bend of that nominal radius, which forces
         the Euler curve's peak curvature TIGHTER than radius_um at small
-        radii (see notebooks/02_bent_waveguide.ipynb Section 4.2b's
+        radii (see si/notebooks/02_bent_waveguide.ipynb Section 4.2b's
         markdown for the full investigation, including a direct gdsfactory
         bbox comparison). The crossover was pinned down with the 9-point
-        sweep to between radius_um=1.5 (euler still worse, 0.497dB vs
-        circular's 0.307dB) and radius_um=1.75 (euler clearly better,
-        0.227dB vs 0.292dB) -- do not use this Euler fit below
+        sweep to between radius_um=1.5 (euler still worse, 0.512dB vs
+        circular's 0.304dB) and radius_um=1.75 (euler clearly better,
+        0.219dB vs 0.294dB) -- do not use this Euler fit below
         radius_um~1.75 as if Euler were the better choice there; it isn't.
     """
     design_point = design_points.load_design_point(_DESIGN_POINT_PATH)
+    return bend_from_record(design_point, wl, radius_um, bend_type)
+
+
+def bend_from_record(design_point: dict, wl=1.35, radius_um: float | None = None,
+                     bend_type: str = "circular"):
+    """`bend` evaluated from an already-loaded design-point record, so another
+    track (models/sin_bend.py) can reuse the same fitted-model form."""
     fitted = design_point["fitted_model"][bend_type]
 
     if radius_um is None:

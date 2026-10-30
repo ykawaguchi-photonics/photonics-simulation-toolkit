@@ -20,7 +20,7 @@ therefore:
 
 The 2D top-view FDTD that `tfln_mzm.py` runs afterwards uses an
 effective-index (EIM) reduction of this cross-section (`eim_indices`), whose
-own error against the MPB result is measured in notebooks/11_tfln_mzm.ipynb
+own error against the MPB result is measured in tfln/notebooks/01_tfln_mzm.ipynb
 rather than assumed small.
 
 **Coordinates.** Lab frame used everywhere in this module's public API and in
@@ -123,7 +123,7 @@ DEFAULT_PARAMS = {
     "air_um": 2.0,               # air cladding above the film inside the MPB cell
     "cell_lateral_um": 8.0,      # MPB cell width (must exceed the electrode gap so the
                                  # mode tail at the electrode edge can be read off)
-    "resolution": 32,            # MPB pixels/um; converged value chosen in notebook 11
+    "resolution": 32,            # MPB pixels/um; converged value chosen in notebook tfln/01
 }
 
 
@@ -305,7 +305,7 @@ def group_index_dispersive(params: dict | None = None, dwl_um: float = 0.01, res
     from two MPB solves at wl0 -/+ dwl with every Sellmeier index re-evaluated at
     that wavelength. Everything else in this module holds the indices fixed at wl0
     (the toolkit's non-dispersive convention), which drops LN's own material
-    dispersion from n_g; the RF velocity-matching analysis (notebook 11 section 9)
+    dispersion from n_g; the RF velocity-matching analysis (notebook tfln/01 section 9)
     is the one place where that omission would change a conclusion, so this
     single quantity is computed dispersively and labeled as such."""
     params = {**DEFAULT_PARAMS, **(params or {})}

@@ -3,7 +3,7 @@ the layer that connects the optical cross-section (`tfln_waveguide.py`), the
 electrode field (`tfln_electrostatics.py`), a 2D top-view FDTD check that reuses
 `mzm.py` / `coupler.py` unchanged, and a traveling-wave RF bandwidth model.
 
-Chain of physics (notebook 11 follows it section by section):
+Chain of physics (notebook tfln/01 follows it section by section):
 
 1. Pockels effect in LN, for the field along the optic axis (lab x for x-cut TE):
        Delta(1/n_e^2) = r33 E_x   =>   Delta n_e = -1/2 n_e^3 r33 E_x
@@ -168,7 +168,7 @@ def eo_response(f_hz, length_m: float, n_rf: float, n_g: float, alpha_np_per_m, 
         Phi(omega) ~ int_0^L V(z) e^{+j omega n_g z / c} dz,
     integrated in closed form below. m(f) = |Phi(f)| / |Phi(0)|; Phi(0) is the
     lossless DC case, a uniform V = V_s Z_L / (Z_L + Z_s). EO "3 dB bandwidth" in
-    notebook 11 is the frequency where 20 log10 m = -3 dB (the electrical-RF
+    notebook tfln/01 is the frequency where 20 log10 m = -3 dB (the electrical-RF
     convention used in most TFLN papers)."""
     f = np.asarray(f_hz, dtype=float)
     w = 2 * np.pi * f
@@ -263,7 +263,7 @@ def phase_response_factor(core_index, clad_index, width_um, wl_um, dn: float = 1
 def coupler_params(core_index: float, clad_index: float, **overrides) -> dict:
     """coupler.py parameter set in TFLN effective indices. Defaults reflect the low
     index contrast (~0.2): a wider gap, wider arm separation and longer, gentler
-    S-bends than the toolkit's 2.7/1.44 couplers; see notebook 11 section 7."""
+    S-bends than the toolkit's 2.7/1.44 couplers; see notebook tfln/01 section 7."""
     p = {**coupler.DEFAULT_PARAMS,
          "core_index": core_index, "clad_index": clad_index,
          "wg_width_um": 1.0, "wg_height_um": tw.DEFAULT_PARAMS["film_um"],
@@ -295,7 +295,7 @@ def monitor_safe_length(cp: dict, length_um: float) -> float:
     permittivity hole at the port plane, and the mode monitor there lost ~47 % of
     the power. coupler/mzi/mzm `_leads` now overlap the S-bend by one pixel, which
     removes that hole at its source, so this nudge is no longer required. It is kept
-    because notebooks/11_tfln_mzm.ipynb's recorded run used it (see
+    because tfln/notebooks/01_tfln_mzm.ipynb's recorded run used it (see
     docs/troubleshooting_log.md)."""
     res = cp["resolution"]
     offset = 2 * cp["sbend_len_um"] + cp["lead_len_um"] + cp["dpml_um"] + cp["margin_um"]

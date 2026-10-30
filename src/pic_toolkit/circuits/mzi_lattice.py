@@ -36,7 +36,7 @@ numerically), the opposite of what a WDM channel filter needs. The halfband
 target keeps the same -3dB crossover for every N (by construction) while
 widening the -1dB (near-flat-top) region as N grows -- confirmed
 numerically for N=2 vs N=4 (-1dB width grows from ~30% to ~35% of one FSR,
-see `circuits/wdm_mux_mzi_lattice_sax.ipynb` Section 5).
+see `circuits/wdm_sax.ipynb` Section 5).
 
 Synthesis, once the target is right, reuses the SAME machinery either way:
 
@@ -363,7 +363,7 @@ def unitary_project(model_fn, port_names: tuple):
     noise -- each individually passes its own validation (a few percent
     energy-conservation deviation, well within that component's own
     tolerance). Composing 2 such components via `sax.circuit()` stays honest
-    (measured directly composing `circuits/mzi_real_fdtd_sax.ipynb`'s N=2
+    (measured directly composing `circuits/wdm_sax.ipynb`'s real N=2
     real MZI: total scattered power ~0.98, consistent with real loss). But
     composing 3+ in series (an N=4 real lattice) was found to VIOLATE
     passivity outright -- total scattered power exceeding 1 by up to ~26% at

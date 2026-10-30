@@ -1,5 +1,5 @@
 #!/bin/bash
-# One-time overnight run of notebooks/06_mzi.ipynb's full delta_L sweep (Section 10),
+# One-time overnight run of si/notebooks/06_mzi.ipynb's full delta_L sweep (Section 10),
 # fired by a single crontab entry. Bundles cd + the real command into one
 # self-contained invocation -- a background process's working directory is not
 # guaranteed to match the interactive shell's -- so this script never assumes any
@@ -19,7 +19,7 @@ cd "$REPO_DIR"
     echo "=== run_mzi_sweep_once.sh starting at $(date) ==="
     "$CONDA_BIN" run -n mp jupyter nbconvert --to notebook --execute --inplace \
         --ExecutePreprocessor.timeout=21600 \
-        notebooks/06_mzi.ipynb
+        si/notebooks/06_mzi.ipynb
     echo "=== run_mzi_sweep_once.sh finished at $(date) ==="
 } >> "$LOG_FILE" 2>&1
 

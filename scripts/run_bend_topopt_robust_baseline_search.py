@@ -26,7 +26,7 @@ from pathlib import Path
 import numpy as np
 
 _REPO = Path(__file__).resolve().parents[1]
-_OUT_DIR = _REPO / "data" / "sparams" / "bend_topopt_robust" / "baseline_search"
+_OUT_DIR = _REPO / "si" / "data" / "sparams" / "bend_topopt_robust" / "baseline_search"
 
 from pic_toolkit.meep_sim import bend_topopt_robust as btr  # noqa: E402  (after path setup)
 

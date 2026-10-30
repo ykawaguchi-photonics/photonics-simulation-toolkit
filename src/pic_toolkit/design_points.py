@@ -23,7 +23,7 @@ def load_design_point(path: Path) -> dict:
     if not path.exists():
         raise FileNotFoundError(
             f"Design point not found at {path}. "
-            "Run notebooks/01_waveguide_baseline.ipynb first to generate it "
+            "Run si/notebooks/01_waveguide_baseline.ipynb first to generate it "
             "(it saves the validated S-parameter artifact and this design point)."
         )
     return yaml.safe_load(path.read_text())

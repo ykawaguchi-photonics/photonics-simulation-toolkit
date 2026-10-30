@@ -61,17 +61,21 @@ def plot_permittivity(eps: np.ndarray, extent_um: tuple, ax=None, ports=None, pm
     return ax
 
 
-def plot_field(field: np.ndarray, eps: np.ndarray, extent_um: tuple, component: str, ax=None, pml_um=None):
+def plot_field(field: np.ndarray, eps: np.ndarray, extent_um: tuple, component: str, ax=None, pml_um=None,
+               vmax=None):
     """Signed Re(field), diverging colormap (`style.CMAP_FIELD`) -- the de
     facto convention for EM field plots in the Meep/photonics community, kept
     deliberately rather than switched to an intensity map. The structure
     boundary is drawn as a thin contour line (not a filled, alpha-blended
     raster) so it doesn't mute the field colors.
 
-    `pml_um`, if given, shades the PML region (see `_shade_pml`).
+    `pml_um`, if given, shades the PML region (see `_shade_pml`). `vmax`, if
+    given, fixes the color limits to +-vmax (e.g. one shared scale across
+    several panels); by default each plot scales to its own max |Re(field)|.
     """
     ax = ax or plt.gca()
-    vmax = np.max(np.abs(field.real))
+    if vmax is None:
+        vmax = np.max(np.abs(field.real))
     im = ax.imshow(
         field.real.T,
         origin="lower",

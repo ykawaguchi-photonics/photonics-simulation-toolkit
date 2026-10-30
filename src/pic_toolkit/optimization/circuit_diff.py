@@ -43,12 +43,12 @@ def resolve_chosen_coupling_lengths_um(n_couplers: int = 4) -> list[float]:
 
     kappas, _signs = ml.synthesize_maximally_flat_kappas(n_couplers)
 
-    sweep_dir = _REPO_ROOT / "data" / "sparams" / "coupler" / "sweep"
+    sweep_dir = _REPO_ROOT / "si" / "data" / "sparams" / "coupler" / "sweep"
     available_Lc = {}
     for p in sorted(sweep_dir.glob("coupler_couplinglength*.npz")):
         Lc = float(p.stem.replace("coupler_couplinglength", ""))
         d = np.load(p)
-        design_point = design_points.load_design_point(_REPO_ROOT / "data" / "design_points" / "coupler.yaml")
+        design_point = design_points.load_design_point(_REPO_ROOT / "si" / "data" / "design_points" / "coupler.yaml")
         wl0_um = 1.35
         idx_wl0 = int(np.argmin(np.abs(d["wavelengths_um"] - wl0_um)))
         available_Lc[Lc] = float(d["T_cross"][idx_wl0])
@@ -180,7 +180,7 @@ def build_diff_lattice_circuit_variable_couplers_2d(L_upper, delta_L_delay_um,
     but each coupler's `gap_um` is now ALSO an independent differentiable
     variable (via `coupler_library_2d.coupler_diff_2d`'s 2D interpolation),
     not fixed at the production value of 0.2um. Motivated directly by the
-    2D coupler sweep (`notebooks/06b_directional_coupler_gap_sweep.ipynb`):
+    2D coupler sweep (`si/notebooks/06b_directional_coupler_gap_sweep.ipynb`):
     dispersion residual was found to spike sharply right at each gap's own
     coupling extremum, and the production design's `Lc=26um` (coupler0)
     happens to sit almost exactly at `gap=0.20`'s own extremum -- a

@@ -10,7 +10,7 @@ on the lab-frame cross-section (x lateral, y vertical; same frame as
 regions and phi = 0 on a far outer boundary. Why quasi-static is enough: the
 cross-section (~tens of um) is far smaller than the RF wavelength (several mm
 at 100 GHz), so at every instant the transverse field has the electrostatic
-shape for the instantaneous voltage -- the quasi-TEM picture notebook 11
+shape for the instantaneous voltage -- the quasi-TEM picture notebook tfln/01
 section 9 builds the traveling-wave analysis on.
 
 Discretization: node-based finite volumes on a NON-UNIFORM rectilinear grid
@@ -25,7 +25,7 @@ Electrode layout: ground-signal-ground (GSG) coplanar waveguide sitting on the
 etched LN slab, one rib waveguide centered in EACH gap. The signal-to-ground
 field points in opposite lateral directions in the two gaps, so a single drive
 voltage produces opposite index changes in the two MZM arms -- push-pull for
-free (notebook 11 section 6).
+free (notebook tfln/01 section 6).
 """
 
 from __future__ import annotations
@@ -49,7 +49,7 @@ DEFAULT_PARAMS = {
                                 # reaches far deeper than the optical mode, so (unlike
                                 # the MPB cell) the Si handle is part of this solve; a
                                 # thinner BOX pulls the RF index up toward the optical
-                                # group index -- notebook 11 section 9 sweeps it
+                                # group index -- notebook tfln/01 section 9 sweeps it
     "substrate_um": 500.0,      # high-resistivity Si handle (treated as a lossless dielectric)
     # --- electrodes (GSG, gold, on the etched slab) ---
     "gap_um": 5.0,              # signal-to-ground edge-to-edge gap (each side)
@@ -271,7 +271,7 @@ def surface_resistance(f_hz, sigma: float):
     alpha ~ sqrt(f) conductor-loss model. It assumes the skin depth is smaller than
     the metal thickness (above ~6 GHz for 1 um of gold); below that the current
     spreads through the whole conductor, the line turns partly resistive (RC-like),
-    and this model underestimates the loss -- notebook 11 flags that range."""
+    and this model underestimates the loss -- notebook tfln/01 flags that range."""
     f_hz = np.asarray(f_hz, dtype=float)
     return np.sqrt(np.pi * f_hz * MU0 / sigma)
 

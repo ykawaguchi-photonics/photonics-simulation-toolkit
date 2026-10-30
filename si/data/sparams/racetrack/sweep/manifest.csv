@@ -1,0 +1,12 @@
+coupling_length_um,wl_min_um,wl_max_um,n_freq,artifact_path,validation_passed
+2.0,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length2.0,True
+2.5,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length2.5,True
+3.0,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length3.0,True
+3.5,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length3.5,True
+4.0,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length4.0,True
+6.0,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length6.0,True
+8.0,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length8.0,True
+9.0,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length9.0,False
+10.0,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length10.0,True
+11.0,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length11.0,False
+12.0,1.305,1.32,402,../data/sparams/racetrack/sweep/racetrack_coupling_length12.0,True

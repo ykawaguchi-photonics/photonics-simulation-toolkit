@@ -1,0 +1,42 @@
+{
+  "component": "tfln_coupler",
+  "coupling_length_um": 33.38333333333333,
+  "gap_um": 0.6,
+  "core_index": 1.994510487249157,
+  "clad_index": 1.7939699230528785,
+  "wg_width_um": 1.0,
+  "sbend_len_um": 40.0,
+  "wide_sep_um": 6.0,
+  "resolution": 30,
+  "polarization": "TE (eig_parity=mp.TE)",
+  "validation": {
+    "energy_conservation": {
+      "max_deviation_in_top": 0.0,
+      "max_deviation_in_bot": 0.0,
+      "max_deviation": 0.0,
+      "max_expected_loss": 0.05,
+      "tolerance": 0.03,
+      "passed": true
+    },
+    "reciprocity": {
+      "max_diff_through": 0.0008154035345288024,
+      "max_diff_cross": 0.0009663739191170806,
+      "max_diff_reflect": 1.449086003267922e-06,
+      "max_diff": 0.0009663739191170806,
+      "tolerance": 0.03,
+      "passed": true
+    },
+    "passivity": {
+      "max_power_fraction": 0.6083368772759714,
+      "tolerance": 0.01,
+      "passed": true
+    },
+    "passed": true
+  },
+  "port_names": [
+    "in_top",
+    "in_bot",
+    "out_top",
+    "out_bot"
+  ]
+}

@@ -33,8 +33,8 @@ from pathlib import Path
 import numpy as np
 
 _REPO = Path(__file__).resolve().parents[1]
-_OUT = _REPO / "data" / "sparams" / "bend_topopt_robust" / "region_balance"
-_CONV_REF = (_REPO / "data" / "sparams" / "bend_topopt_robust"
+_OUT = _REPO / "si" / "data" / "sparams" / "bend_topopt_robust" / "region_balance"
+_CONV_REF = (_REPO / "si" / "data" / "sparams" / "bend_topopt_robust"
              / "conventional_reference" / "conventional_reference.json")
 
 from pic_toolkit.meep_sim import bend_topopt, bend_topopt_robust as btr  # noqa: E402

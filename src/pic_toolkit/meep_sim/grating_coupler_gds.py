@@ -10,9 +10,8 @@ Deliberately meep-free (unlike every OTHER meep_sim/*.py module) -- this
 Component is a genuine tapeout export, so a pure layout/tapeout workflow (or
 CI) never needs to import meep to generate it.
 
-Reuses gdsfactory's own `grating_coupler_rectangular` directly, same
-precedent as notebooks/07_spiral_waveguide.ipynb using `gf.components.
-spiral()` directly rather than hand-rolling a component.
+Reuses gdsfactory's own `grating_coupler_rectangular` directly rather than
+hand-rolling a component.
 """
 
 from __future__ import annotations
@@ -84,8 +83,8 @@ def build_gf_component(params: dict):
 def write_gds(component, path: Path) -> Path:
     """Thin wrapper around gdsfactory's own Component.write_gds -- new
     territory for this toolkit (no other notebook writes an actual .gds
-    file to disk). `data/gds/<component>/` is the natural new sibling to
-    `data/design_points/<component>.yaml` and `data/sparams/<component>/`."""
+    file to disk). `si/data/gds/<component>/` is the natural new sibling to
+    `si/data/design_points/<component>.yaml` and `si/data/sparams/<component>/`."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     return component.write_gds(gdspath=path)

@@ -18,7 +18,10 @@ lengthening the jog without changing its x-extent or breaking port
 collinearity. Short straight leads (`lead_len_um`) at each end give the
 source/monitor planes clean straight waveguide to sit on (same role as
 `bend.py`'s `arm_length_um`) -- they add equally to the actual path and to
-the straight-line reference below, so they drop out of `delta_L_um`.
+the straight-line reference below, so they drop out of `delta_L_um`. In the
+FDTD run only, both leads are continued through the margin and the PML
+(`_lead_extensions`); a lead ending in the cladding margin would be a facet
+with ~6 % Fresnel reflection inside the measured S-matrix.
 
 `delta_L_um` (extra centerline length vs. a straight reference spanning the
 same two ports, matching `mzi.py`'s own `delta_L_um` convention) is a closed
@@ -84,6 +87,8 @@ DEFAULT_PARAMS = {
     "margin_um": 1.5,
     "port_offset_um": 1.0,      # ports sit this far, along each outer lead, from its bend tangent point
     "source_offset_um": 0.5,    # source planes sit this much further out than the ports
+    "lead_overrun_um": 1.0,  # simulation only: the leads continue through the margin and the
+                              # PML to this far beyond the cell edge (no facet in the cladding)
 }
 
 
@@ -238,6 +243,25 @@ def build_geometry_from_gds(params: dict) -> list:
     return gds_import.gds_component_to_prisms(gf_component, material=core)
 
 
+def _lead_extensions(params: dict) -> list:
+    """Simulation-only continuations of both leads from their outer ends to
+    beyond the cell edge, so the guided mode leaves through the PML instead of
+    reflecting at a facet in the cladding margin."""
+    dom = _domain(params)
+    core = mp.Medium(index=params["core_index"])
+    width = params["wg_width_um"]
+    blocks = []
+    for port in (dom["o1_port"], dom["o2_port"]):
+        x_far = np.sign(port.x) * (dom["cell_x"] / 2 + params["lead_overrun_um"])
+        blocks.append(mp.Block(size=mp.Vector3(abs(x_far - port.x), width, mp.inf),
+                               center=mp.Vector3((x_far + port.x) / 2, port.y), material=core))
+    return blocks
+
+
+def _simulation_geometry(params: dict) -> list:
+    return build_geometry_from_gds(params) + _lead_extensions(params)
+
+
 def _cell_and_clad(params: dict):
     dom = _domain(params)
     cell = mp.Vector3(dom["cell_x"], dom["cell_y"], 0)
@@ -253,7 +277,7 @@ def get_permittivity_map(params: dict) -> PermittivityMap:
     cell, clad = _cell_and_clad(params)
     sim = mp.Simulation(
         cell_size=cell, boundary_layers=[mp.PML(params["dpml_um"])],
-        geometry=build_geometry_from_gds(params),
+        geometry=_simulation_geometry(params),
         default_material=clad, resolution=params["resolution"],
     )
     with _quiet_meep():
@@ -304,7 +328,7 @@ def _make_simulation(params: dict, launch_from: str, capture_dft: bool):
     )
     sim = mp.Simulation(
         cell_size=cell, boundary_layers=[mp.PML(params["dpml_um"])],
-        geometry=build_geometry_from_gds(params), sources=[source],
+        geometry=_simulation_geometry(params), sources=[source],
         default_material=clad, resolution=params["resolution"],
     )
     mon1 = sim.add_mode_monitor(fcen, fwidth, params["n_freq"], mp.ModeRegion(center=port1_center, size=port1_size))

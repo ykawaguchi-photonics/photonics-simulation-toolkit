@@ -95,10 +95,10 @@ DEFAULT_PARAMS = {
                                # coupling_length_um instead.
     "coupling_length_um": 3.0, # length of the straight racetrack segment running
                                # parallel to the bus -- the primary coupling-strength
-                               # knob. A first sweep across 0-5um (see Section 10) found
-                               # this to be the closest approach to critical coupling,
-                               # so it is used directly as the Section-5 baseline rather
-                               # than an arbitrary middle-of-sweep value.
+                               # knob. 3.0um is only the Section-5 baseline (a short,
+                               # cheap, under-coupled racetrack for validating the
+                               # method); the notebook's Section-9 sweep extends to
+                               # 18um and finds critical coupling near 10um.
     "wg_width_um": 0.5,
     "wg_height_um": 0.22,
     "core_index": 2.7,
@@ -461,13 +461,13 @@ def _make_simulation(params: dict, source_x: float, direction_sign: float, field
 
     dft_obj = None
     if field_snapshot_freqs:
-        # `freq=` (an explicit list) rather than the usual (fcen, df, nfreq) triple --
-        # lets this capture the field at ARBITRARY, independently-chosen frequencies
-        # (e.g. the resonance dip and an off-resonance point, see
-        # capture_field_snapshots) rather than only ever the band center.
+        # The frequency list goes in the (fcen, df, nfreq) position -- lets this capture
+        # the field at ARBITRARY, independently-chosen frequencies (e.g. the resonance
+        # dip and an off-resonance point, see capture_field_snapshots). Passing the
+        # triple AND `freq=` does not work: Meep's fix_dft_args turns the triple into an
+        # evenly spaced grid over the band and drops the `freq=` keyword.
         dft_obj = sim.add_dft_fields(
-            [mp.Hz], fcen, analysis_fwidth, len(field_snapshot_freqs),
-            freq=list(field_snapshot_freqs), center=mp.Vector3(), size=cell,
+            [mp.Hz], list(field_snapshot_freqs), center=mp.Vector3(), size=cell,
         )
 
     return sim, mon1, mon2, dft_obj
@@ -705,6 +705,78 @@ def simulate_baseline(params: dict | None = None, use_native_geometry: bool = Fa
     )
 
 
+def load_or_simulate_baseline(params: dict | None, artifact_stem, use_native_geometry: bool = False) -> BaselineResult:
+    """Cache-or-run wrapper around `simulate_baseline`: if `artifact_stem`(.npz/.json) exists
+    and every parameter it recorded matches `params` (and it has `n_freq` points), rebuild the
+    BaselineResult from it (no FDTD); otherwise simulate. The caller still validates and saves,
+    exactly as for a fresh run. `permittivity` is None for a cached result."""
+    from .. import artifact_cache, sparams
+
+    params = {**DEFAULT_PARAMS, **(params or {})}
+    if artifact_cache.artifact_exists(artifact_stem):
+        art = sparams.load_artifact(artifact_stem)
+        bad = artifact_cache.metadata_mismatches(art.metadata, params)
+        if len(art.wavelengths_um) != params["n_freq"]:
+            bad.append(f"n_freq: cached {len(art.wavelengths_um)} vs requested {params['n_freq']}")
+        if not bad:
+            print(f"loaded cached FDTD result: {artifact_stem}")
+            return BaselineResult(
+                wavelengths_um=art.wavelengths_um, freqs=art.freqs, s_matrix=art.s_matrix,
+                port_names=art.port_names, permittivity=None,
+                sim_params={**params, "meep_version": art.metadata.get("meep_version"),
+                            "python_version": art.metadata.get("python_version", platform.python_version()),
+                            "creation_date": art.metadata.get("creation_date"), "loaded_from": str(artifact_stem)},
+            )
+        print(f"cached artifact {artifact_stem} does not match the requested parameters, re-simulating: {bad}")
+    return simulate_baseline(params, use_native_geometry=use_native_geometry)
+
+
+def load_or_capture_field_snapshots(params: dict | None, wavelengths_um: list, cache_path,
+                                    use_native_geometry: bool = False) -> list:
+    """Cache-or-run wrapper around `capture_field_snapshots` (pickled at `cache_path`,
+    keyed by the full parameter set and the requested wavelengths)."""
+    from .. import artifact_cache
+
+    params = {**DEFAULT_PARAMS, **(params or {})}
+    key = {"params": params, "wavelengths_um": [round(float(w), 9) for w in wavelengths_um],
+           "use_native_geometry": use_native_geometry}
+    return artifact_cache.cached_pickle(
+        cache_path, key, lambda: capture_field_snapshots(params, wavelengths_um, use_native_geometry))
+
+
+def resonance_scan_wavelengths(dip_wl_um: float, clean_wl_um: float, half_span_um: float = 4e-4,
+                               n_scan: int = 9) -> list:
+    """Wavelengths for one field-snapshot run: `n_scan` points spanning
+    dip_wl_um +- half_span_um, then the off-resonance `clean_wl_um` last.
+    A resonance is only a few tenths of a nm wide, and the dip sampled on the
+    sweep's 0.04 nm grid can sit a fraction of a linewidth away from the
+    snapshot run's own resonance, so the on-resonance snapshot is picked from
+    the scan (`bus_power_ratio`) rather than assumed. Extra DFT frequencies are
+    cheap here (Meep decimates the field DFT for a narrowband source)."""
+    scan = dip_wl_um + np.linspace(-half_span_um, half_span_um, n_scan)
+    return [round(float(w), 7) for w in scan] + [round(float(clean_wl_um), 7)]
+
+
+def bus_power_ratio(snapshot: FieldSnapshot, params: dict) -> float:
+    """Downstream / upstream bus power from a field snapshot: mean over x of
+    sum_y |Hz|^2 in a band around the bus, downstream of the racetrack vs.
+    between the source and the racetrack. The upstream window also holds the
+    (small) reflected wave, so this approximates |S21|^2 to within the
+    reflection -- enough to find the snapshot run's own resonance."""
+    params = {**DEFAULT_PARAMS, **(params or {})}
+    dom = _compute_domain(params)
+    x = np.linspace(snapshot.extent_um[0], snapshot.extent_um[1], snapshot.field.shape[0])
+    y = np.linspace(snapshot.extent_um[2], snapshot.extent_um[3], snapshot.field.shape[1])
+    band = np.abs(y - dom["bus_y"]) < params["wg_width_um"] / 2 + params["gap_um"] / 2 + 0.25
+    upstream = (x > -dom["source_offset"] + 0.2) & (x < -dom["half_length"] - 0.2)
+    downstream = (x > dom["half_length"] + 0.2) & (x < dom["source_offset"])
+
+    def power(mask):
+        return np.mean(np.sum(np.abs(snapshot.field[np.ix_(mask, band)]) ** 2, axis=1))
+
+    return float(power(downstream) / power(upstream))
+
+
 # ---------------------------------------------------------------------------
 # Resonator-specific energy-conservation check.
 #
@@ -747,11 +819,18 @@ def _find_resonance_dip_spans(total: np.ndarray, baseline: float, min_dip_depth:
     racetrack's actual data to correctly span a dip's full ~1.7nm shoulder
     (17 grid points at this notebook's narrowband n_freq=201/20nm sweep
     resolution) rather than just the 1-2 points nearest the exact minimum.
+
+    The first and last points count as minima too when they are no higher
+    than their one neighbor: a resonance clipped by the window edge (common
+    for long racetracks, whose free spectral range approaches the window
+    width) is still a resonance, and its shoulder is traced inward the same way.
     """
     n = len(total)
     in_dip = np.zeros(n, dtype=bool)
     is_local_min = np.zeros(n, dtype=bool)
     is_local_min[1:-1] = (total[1:-1] <= total[:-2]) & (total[1:-1] <= total[2:])
+    is_local_min[0] = total[0] <= total[1]
+    is_local_min[-1] = total[-1] <= total[-2]
     minima = [i for i in np.where(is_local_min)[0] if total[i] < baseline - min_dip_depth]
 
     for m in minima:

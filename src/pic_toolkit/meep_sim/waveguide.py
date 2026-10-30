@@ -60,7 +60,7 @@ DEFAULT_PARAMS = {
     "n_freq": 21,
     "cell_y_um": 4.0,           # simulation cell width (transverse direction)
     "length_um": 4.0,           # characterized waveguide length (port-to-port);
-                                 # swept in notebooks/01_waveguide_baseline.ipynb
+                                 # swept in si/notebooks/01_waveguide_baseline.ipynb
                                  # to fit n_eff/loss via the cutback method
     "source_margin_um": 0.5,    # gap between port reference plane and source plane
     "pml_margin_um": 0.5,       # gap between source plane and PML inner edge
@@ -143,7 +143,7 @@ def _straight_centered(length_um: float, wg_width_um: float):
 
 def build_gf_component(params: dict):
     """The DUT itself: exactly length_um of straight waveguide -- what
-    Sections 2-3 of notebooks/01_waveguide_baseline.ipynb display, and
+    Sections 2-3 of si/notebooks/01_waveguide_baseline.ipynb display, and
     what would be exported to GDS for a real tapeout."""
     return _straight_centered(params["length_um"], params["wg_width_um"])
 

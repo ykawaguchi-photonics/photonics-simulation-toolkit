@@ -32,7 +32,7 @@ error the idealized formula itself carries, which is why
 `phase_factor_prior=1.02` is allowed to exceed 1 (see its own
 DEFAULT_PARAMS comment for why an actual confinement-factor measurement was
 abandoned in favor of this looser, explicitly-not-a-confinement-factor
-prior). notebooks/08_mzm.ipynb's Section 7 Meep-validates how close the
+prior). si/notebooks/08_mzm.ipynb's Section 7 Meep-validates how close the
 derived length actually lands to a true pi swing and reports the REAL
 phase-response factor without forcing agreement, exactly as
 03_mzm_design_v4.ipynb's own Section 7a does.
@@ -74,7 +74,7 @@ genuine reciprocity check), so `pic_toolkit.checks`/`pic_toolkit.sparams`/
 This module is self-contained (own result dataclass, own physical
 validation, own artifact save/load), matching `coupler.py`/`mzi.py`'s
 precedent. `pic_toolkit.viz` and `pic_toolkit.sweep.save_manifest` ARE
-generic enough to reuse as-is (see notebooks/08_mzm.ipynb).
+generic enough to reuse as-is (see si/notebooks/08_mzm.ipynb).
 
 Only this file (plus `waveguide.py`, `bend.py`, `bend_topopt.py`,
 `racetrack.py`, `coupler.py`, `mzi.py`) imports meep.
@@ -114,8 +114,8 @@ def _quiet_meep():
 # ---------------------------------------------------------------------------
 DEFAULT_PARAMS = {
     # --- splitter/combiner stage: reused verbatim from coupler.py's own
-    # DEFAULT_PARAMS / data/design_points/coupler.yaml (the validated 50:50
-    # point from notebooks/06_directional_coupler.ipynb) -- both MZM stages
+    # DEFAULT_PARAMS / si/data/design_points/coupler.yaml (the validated 50:50
+    # point from si/notebooks/06_directional_coupler.ipynb) -- both MZM stages
     # use this exact design, unmodified, same convention as mzi.py.
     "coupling_length_um": 13.848128928800111,
     "gap_um": 0.2,
@@ -169,7 +169,7 @@ DEFAULT_PARAMS = {
                                # why >1 is an allowed value here rather than a bug --
                                # it also absorbs the idealized sizing formula's own
                                # modeling error, not just mode overlap.
-                               # notebooks/08_mzm.ipynb Meep-measures the REAL
+                               # si/notebooks/08_mzm.ipynb Meep-measures the REAL
                                # phase-response factor at this module's own operating
                                # point and reports it without forcing agreement.
 
@@ -400,7 +400,7 @@ def build_geometry(params: dict, delta_n_lower: float = 0.0, delta_n_upper: floa
 
 def build_gf_component(params: dict):
     """gdsfactory Component for geometry display/comparison (Section 3/4 of
-    notebooks/08_mzm.ipynb) -- traces the same shape build_geometry()'s
+    si/notebooks/08_mzm.ipynb) -- traces the same shape build_geometry()'s
     native mp.Block construction uses, reusing coupler.build_gf_component's
     stage shape and mzi._delay_arm_path's bump curve directly. gdsfactory has
     no notion of a spatially-varying index, so this shows the WAVEGUIDE SHAPE
@@ -614,8 +614,8 @@ def simulate(params: dict | None = None, delta_n_lower: float = 0.0, delta_n_upp
              capture_dft: bool = False) -> MZMResult:
     """Single-excitation (in_top / port 1) characterization at one push-pull
     operating point (delta_n_lower, delta_n_upper) -- the workhorse call for
-    the Delta_n sweep (Section 10) and the delta_L_um path-bias check
-    (Section 12), where many points are needed and a full dual-excitation
+    the Delta_n sweep (Section 9) and the delta_L_um path-bias check
+    (Section 11), where many points are needed and a full dual-excitation
     reciprocity check per point would be prohibitively expensive on this
     device's already-long domain. See `simulate_baseline` for the one
     canonical, fully-validated (dual-excitation) operating point.
@@ -642,7 +642,7 @@ def simulate_baseline(params: dict | None = None, delta_n_lower: float | None = 
     (port 2) independently, enabling a genuine Lorentz-reciprocity check
     (S21 vs S12) the same way mzi.py's own baseline does. This is the one
     operating point this module validates at full (strict-tolerance) rigor;
-    the Delta_n sweep and delta_L_um check (Sections 10/12) use the cheaper
+    the Delta_n sweep and delta_L_um check (Sections 9/11) use the cheaper
     single-excitation `simulate` instead.
     """
     params = {**DEFAULT_PARAMS, **(params or {})}
@@ -678,6 +678,63 @@ def simulate_baseline(params: dict | None = None, delta_n_lower: float | None = 
         delta_n_lower=delta_n_lower, delta_n_upper=delta_n_upper,
         permittivity=permittivity, field_snapshot=field_snapshot, sim_params=sim_params,
     )
+
+
+def load_or_simulate(params: dict | None, delta_n_lower: float, delta_n_upper: float, artifact_stem,
+                     dual_excitation: bool = False) -> MZMResult:
+    """Cache-or-run wrapper around `simulate` (or `simulate_baseline` with
+    `dual_excitation=True`): if `artifact_stem`(.npz/.json) exists and records
+    exactly these parameters (`metadata["simulation_params"]`, every key), the
+    same push-pull point and `n_freq` points, rebuild the MZMResult from it (no
+    FDTD); otherwise simulate. The caller still validates and saves, exactly as
+    for a fresh run. `permittivity` and `field_snapshot` are None for a cached
+    result."""
+    from .. import artifact_cache
+
+    params = {**DEFAULT_PARAMS, **(params or {})}
+    if artifact_cache.artifact_exists(artifact_stem):
+        art = load_artifact(artifact_stem)
+        recorded = art.metadata.get("simulation_params")
+        if recorded is None:
+            bad = ["no simulation_params recorded"]
+        else:
+            bad = artifact_cache.metadata_mismatches({"simulation_params": recorded}, params)
+            bad += [f"{k}: not recorded" for k in params if k not in recorded]
+        for name, want in (("delta_n_lower", delta_n_lower), ("delta_n_upper", delta_n_upper)):
+            if not np.isclose(art.metadata.get(name, np.nan), want, rtol=0, atol=1e-12):
+                bad.append(f"{name}: cached {art.metadata.get(name)!r} vs requested {want!r}")
+        if len(art.wavelengths_um) != params["n_freq"]:
+            bad.append(f"n_freq: cached {len(art.wavelengths_um)} vs requested {params['n_freq']}")
+        if dual_excitation and not np.any(art.S12):
+            bad.append("cached artifact is single-excitation")
+        if not bad:
+            print(f"loaded cached FDTD result: {artifact_stem}")
+            dual = dict(S22=art.S22, S12=art.S12, S32=art.S32, S42=art.S42) if dual_excitation else {}
+            return MZMResult(
+                wavelengths_um=art.wavelengths_um, freqs=art.freqs,
+                S11=art.S11, S21=art.S21, S31=art.S31, S41=art.S41, **dual,
+                delta_n_lower=delta_n_lower, delta_n_upper=delta_n_upper,
+                sim_params={**params, "meep_version": art.metadata.get("meep_version"),
+                            "python_version": art.metadata.get("python_version", platform.python_version()),
+                            "creation_date": art.metadata.get("creation_date"), "loaded_from": str(artifact_stem)},
+            )
+        print(f"cached artifact {artifact_stem} does not match the requested parameters, re-simulating: {bad}")
+    if dual_excitation:
+        return simulate_baseline(params, delta_n_lower, delta_n_upper)
+    return simulate(params, delta_n_lower, delta_n_upper)
+
+
+def load_or_capture_field_snapshot(params: dict | None, delta_n_lower: float, delta_n_upper: float,
+                                   cache_path) -> FieldSnapshot:
+    """Cache-or-run field snapshot of a single in_top excitation (pickled at
+    `cache_path`, keyed by the full parameter set and the push-pull point)."""
+    from .. import artifact_cache
+
+    params = {**DEFAULT_PARAMS, **(params or {})}
+    key = {"params": params, "delta_n_lower": float(delta_n_lower), "delta_n_upper": float(delta_n_upper)}
+    return artifact_cache.cached_pickle(
+        cache_path, key,
+        lambda: simulate(params, delta_n_lower, delta_n_upper, capture_dft=True).field_snapshot)
 
 
 # ---------------------------------------------------------------------------
@@ -793,7 +850,7 @@ def load_artifact(path_stem) -> MZMArtifact:
     if not npz_path.exists() or not json_path.exists():
         raise FileNotFoundError(
             f"MZM artifact not found at {path_stem}(.npz/.json). "
-            "Run notebooks/08_mzm.ipynb first to generate it."
+            "Run si/notebooks/08_mzm.ipynb first to generate it."
         )
     data = np.load(npz_path)
     metadata = json.loads(json_path.read_text())

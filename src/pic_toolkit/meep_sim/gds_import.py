@@ -1,7 +1,7 @@
 """Convert a gdsfactory Component's polygons into Meep geometry -- lets any
 gdsfactory component (not just the toolkit's own hand-built spiral.py) be
 inspected as a Meep permittivity map, e.g. gdsfactory.components.spiral()
-itself (see notebooks/07_spiral_waveguide.ipynb's final section).
+itself.
 
 Each polygon is emitted as its own mp.Prism, deliberately NOT merged into one
 big polygon per layer first: meep_sim/mzi.py's delay-arm bump already hit a
