@@ -15,18 +15,18 @@ at 1550 nm a0 = 632 nm and a = 367 nm.
 |---|---|---|
 | `notebooks/01_unit_cells_and_edge_states.ipynb` | permittivity maps of the eight unit cells; bulk bands (fine Γ–M–K sweep, points; p/d character for spin-Hall); ribbon edge bands of the four walls | shared bulk gaps: spin TM 4.1 % (centre 0.4624 c/a0, Wu–Hu 0.4629), spin TE 3.1 %, valley TE 6.8 % at K, valley TM 8.7 %; one edge band crosses each gap (v_g 0.11–0.21 c) |
 | `notebooks/02_domain_walls_chiral_excitation.ipynb` | four domain walls driven by S± circular dipoles; Re Hz / Re Ez and \|E\|² maps; power split and directionality | source placed from the edge mode's local circular polarization (MPB) and coupling strength; one-way excitation: directionality 0.994 (spin TM), 0.990 (spin TE; converged only at 64/a0 and 20 rows, drive 0.004 above the gap edge), 0.997 (valley TE), 0.998 (valley TM); source at a C2 centre gives 0 |
-| `notebooks/03_waveguide_to_topological_coupling.ipynb` | 500 nm strip → TE walls: butt coupling, line defect, parity rule; topology-optimized transitions (history, structures, before/after) | edge-channel coupling, butt → optimized: spin 5.9 % → 48.7 % (band average, ≈ 11 nm), valley 0 % → 77.1 % (≈ 62 nm, peak 80.9 %, R 2.4 %); 100 nm minimum features |
+| `notebooks/03_waveguide_to_topological_coupling.ipynb` | 500 nm strip → TE walls with the gaps matched (4.2–4.3 %): butt coupling, parity rule; topology-optimized 2.5 µm transitions (history, structures, 100 nm check, before/after) | forward power over the full height, band average (≈ 19 nm), butt → optimized: spin 11.9 % → 87.0 %, valley 0.01 % → 83.6 % (20 rows per side); strictly 100 nm: 79.6 % / 5 % |
 
 Code: `src/pic_toolkit/meep_sim/topological_pc.py` (crystals, unit cells, ribbons, walls,
 strip feed). Long runs: `scripts/compute_bands.py`, `scripts/chirality_maps.py`, `scripts/scan_spin_sources.py`, `scripts/scan_spin_rows.py`, `scripts/run_walls.py`,
-`scripts/run_coupling.py`, `scripts/topopt_transition.py` (run from this folder in the
+`scripts/run_coupling.py`, `scripts/topopt_transition_v2.py`, `scripts/eval_design_res.py`, `scripts/gapmatched_bands.py` (run from this folder in the
 `mp` env). Literature (tiered by source quality): `literature.md`. Parameter history:
 `docs/simulation_settings_record.md`, section `meep_sim/topological_pc.py`.
 
 `data/` holds every cached run (`bands/`, `walls/`, `coupling/`, `topopt/`) and the two
 design points `topopt_{spin,valley}_transition.yaml`. The notebooks reload these caches, so
 a re-run takes minutes; deleting them re-runs the study (bands ≈ 1 h, walls ≈ 4 h,
-coupling ≈ 3 h, each topology optimization 6–12 h of single-core FDTD). Field maps are
+coupling ≈ 3 h, each topology optimization ≈ 20 h on 12 cores). Field maps are
 stored at every second grid point; all power numbers are evaluated at full resolution.
 
 ## Notes

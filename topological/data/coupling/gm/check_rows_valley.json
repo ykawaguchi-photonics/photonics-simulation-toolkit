@@ -1,0 +1,6 @@
+{
+ "source": "scripts/check_pad.py, log data/coupling/gm/log_check_pad.txt (2026-11-05); optimized valley transition gm36_s1r, 36/a, band 0.2355-0.2385",
+ "rows12": {"forward_band": 0.7703, "bulk_band": 0.1210},
+ "rows12_pad0.5_pml1.5": {"forward_band": 0.7695, "bulk_band": 0.1223},
+ "rows20": {"forward_band": 0.8355, "bulk_band": 0.0347}
+}

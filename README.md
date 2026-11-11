@@ -140,9 +140,22 @@ air-hole (TE) crystal.
 |---|---|
 | `topological/notebooks/01_unit_cells_and_edge_states.ipynb` | unit cells, bulk bands (Wu–Hu gap reproduced to 0.1 %), ribbon edge bands of the four domain walls |
 | `topological/notebooks/02_domain_walls_chiral_excitation.ipynb` | one-way edge transport from circularly polarized dipoles (directionality 0.83–0.99) |
-| `topological/notebooks/03_waveguide_to_topological_coupling.ipynb` | 500 nm strip → TE topological waveguide; adjoint topology-optimized transitions: spin 5.9 % → 48.7 %, valley 0 % → 77 % |
+| `topological/notebooks/03_waveguide_to_topological_coupling.ipynb` | 500 nm strip → TE topological waveguide; adjoint topology-optimized 2.5 µm transitions, gaps matched: spin 12 % → 87 %, valley 0 % → 84 % |
 
 See [topological/README.md](topological/README.md).
+
+## SiN photonic-crystal nanocavities (Meep / MPB 3D)
+
+Under `sin_cavity/`: L3 and nanobeam cavities in a suspended 200 nm SiN membrane at 637 nm,
+after the Noda review (Nat. Photon. 2007), with Q, mode volume and Purcell factor in 3D.
+
+| Notebook | Content |
+|---|---|
+| `sin_cavity/notebooks/01_bands_and_mirrors.ipynb` | slab band gap of the hole lattice, nanobeam band edges and mirror strength, taper designs |
+| `sin_cavity/notebooks/02_l3_cavity.ipynb` | L3 with end-hole shifts (FDTD + GME screen): Q 3.0×10³, V 1.13 (λ/n)³ at 642 nm |
+| `sin_cavity/notebooks/03_nanobeam_cavity.ipynb` | McCutcheon & Lončar 2008 reproduced (peak Q 2.2×10⁵); own Quan–Lončar taper Q ~10⁶; tolerance; L3 vs nanobeam |
+
+See [sin_cavity/README.md](sin_cavity/README.md).
 
 ## Circuit-level compositions
 

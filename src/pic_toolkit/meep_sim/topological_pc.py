@@ -69,6 +69,19 @@ A0_NM = 0.408 * 1550.0
 A_NM = 0.2368 * 1550.0
 
 
+def set_gap_matched() -> None:
+    """Switch spin_te and valley_te to the gap-matched pair of notebook 03 (2026-11): spin-Hall
+    a0/R = 2.8 / 3.2 (the largest shared TE gap of the deformation scan: 4.42 / 4.45 % at
+    MPB resolution 48 / 64; Si bridge between expanded clusters 0.105 a0 = 67 nm) and
+    valley-Hall delta = 0.1275 (gap reduced to 4.41 / 4.53 % at 48 / 64; the valley gap is
+    pixel-sensitive at 24-36/a, so matched at 48). Gap centres stay near 0.408 c/a0 and
+    0.237 c/a, so A0_NM, A_NM and the strip width are unchanged. Call once at the start of a
+    script; scripts/scan_gaps.py, scripts/gapmatched_bands.py."""
+    global VALLEY_TE_DELTA
+    SPIN_A0_OVER_R.update(topological=2.8, trivial=3.2)
+    VALLEY_TE_DELTA = 0.1275
+
+
 def valley_sizes(kind: str, variant: str) -> tuple[float, float]:
     """(size_A, size_B) of a valley crystal: triangle sides (TE) or rod radii (TM).
     VPC1: A small, B large; VPC2: swapped (inversion partner); symmetric: equal."""
@@ -543,14 +556,15 @@ def strip_width(kind: str) -> float:
 
 
 def coupler_geometry(kind: str, w: float, x_left: float, x_right: float, n_rows: int,
-                     fill_len: float = 0.0) -> list:
-    """Host block for x >= 0, strip (width w, air cladding) from x_left to the face at x = 0,
-    and the wall's holes (spin: whole atoms with centre >= 1/2; valley: lattice shifted by
-    -1/2, holes clipped at the face). fill_len (valley): bearded-pair holes omitted over
-    the first fill_len cells (line-defect coupler)."""
+                     fill_len: float = 0.0, y_strip: float = 0.0, x_face_shift: float = 0.0) -> list:
+    """Host block for x >= 0, strip (width w, air cladding, centre y_strip) from x_left to the
+    face at x = 0, and the wall's holes (spin: whole atoms with centre >= 1/2; valley: lattice
+    shifted by -1/2, holes clipped at the face). x_face_shift translates the lattice along x
+    against the fixed face (termination plane). fill_len (valley): bearded-pair holes omitted
+    over the first fill_len cells (line-defect coupler)."""
     geom = [mp.Block(size=mp.Vector3(x_right + 1, mp.inf), material=HOST, center=mp.Vector3((x_right + 1) / 2, 0)),
-            mp.Block(size=mp.Vector3(-x_left + 1, w), material=HOST, center=mp.Vector3((x_left - 1) / 2, 0))]
-    x_shift = 0.0 if kind.startswith("spin") else -0.5
+            mp.Block(size=mp.Vector3(-x_left + 1, w), material=HOST, center=mp.Vector3((x_left - 1) / 2, y_strip))]
+    x_shift = (0.0 if kind.startswith("spin") else -0.5) + x_face_shift
     shapes = wall_shapes(kind, x_left, x_right + 1, n_rows, x_shift, x_face=0.0)
     if fill_len > 0:
         shapes = [sh for sh in shapes if not (abs(abs(sh["poly"].mean(0)[1]) - D_NN / 2) < 1e-6
@@ -559,7 +573,8 @@ def coupler_geometry(kind: str, w: float, x_left: float, x_right: float, n_rows:
 
 
 def run_wg_coupling(kind: str, w: float | None = None, design: dict | None = None, fill_len: float = 0.0,
-                    eig_band: int = 1, nfreq: int = 101, **kw) -> dict:
+                    eig_band: int = 1, nfreq: int = 101, y_strip: float = 0.0, x_face_shift: float = 0.0,
+                    **kw) -> dict:
     """Strip mode `eig_band` (1 = fundamental) as a Gaussian pulse into the TE wall.
 
     Spectra normalized to the incident mode power: R (same mode back), back (all power
@@ -573,7 +588,7 @@ def run_wg_coupling(kind: str, w: float | None = None, design: dict | None = Non
     sx, cx = x_right - x_left, (x_right + x_left) / 2
     sy = 2 * (p["n_rows"] * ROW_H + p["pad_y"] + p["dpml"])
     x_t = p.get("x_t", p["n_len"] - 2.0)
-    geom = coupler_geometry(kind, w, x_left, x_right, p["n_rows"], fill_len)
+    geom = coupler_geometry(kind, w, x_left, x_right, p["n_rows"], fill_len, y_strip, x_face_shift)
     if design is not None:
         wts = np.asarray(design["weights"], float)
         mg = mp.MaterialGrid(mp.Vector3(*wts.shape), mp.air, HOST, weights=wts, do_averaging=True, beta=np.inf)
@@ -612,7 +627,7 @@ def run_wg_coupling(kind: str, w: float | None = None, design: dict | None = Non
             "eps": sim.get_array(component=mp.Dielectric, vol=fvol),
             "extent": np.array([cx - (sx - dpml - p["dpml_right"]) / 2, cx + (sx - dpml - p["dpml_right"]) / 2,
                                 -(sy / 2 - dpml), sy / 2 - dpml]),
-            "w": w, "fill_len": fill_len, "eig_band": eig_band, "x_t": x_t, "t_end": sim.meep_time()}
+            "w": w, "fill_len": fill_len, "eig_band": eig_band, "y_strip": y_strip, "x_face_shift": x_face_shift, "x_t": x_t, "t_end": sim.meep_time()}
 
 
 def run_straight_strip(w: float, length: float = 16.0, resolution: int = 32, fcen: float = 0.408,
