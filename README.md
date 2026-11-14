@@ -1,10 +1,13 @@
 # photonics-simulation-toolkit
 
 An end-to-end toolkit for building, physically validating, and composing
-silicon photonic integrated circuit (PIC) components — from
-[Meep](https://meep.readthedocs.io/) FDTD simulation, through
-[SAX](https://flaport.github.io/sax/) circuit-level composition, to
-[gdsfactory](https://gdsfactory.github.io/gdsfactory/) GDS layout output.
+photonic integrated circuit (PIC) components on silicon, silicon nitride and
+thin-film lithium niobate — from [Meep](https://meep.readthedocs.io/) FDTD
+simulation, through [SAX](https://flaport.github.io/sax/) circuit-level
+composition, to [gdsfactory](https://gdsfactory.github.io/gdsfactory/) GDS
+layout output. Alongside the component library are studies with the same
+tools: 3D FDTD (fdtdx), SiN meta-grating couplers, topological photonic
+crystals, and SiN photonic-crystal nanocavities.
 
 ![Simulation-to-layout workflow: geometry design in gdsfactory, FDTD simulation in Meep, S-parameter extraction in SAX, circuit simulation in SAX, GDS layout export in gdsfactory](docs/images/workflow_overview.png)
 
@@ -35,8 +38,8 @@ any expensive or consequential step.
 ## Why this is more than a set of simulation notebooks
 
 - **The loop actually closes.** Component-level FDTD results don't stay in
-  their own notebook — `circuits/wdm_sax.ipynb` is the first module in this
-  repo to call `sax.circuit()`, composing cached, genuinely FDTD-measured
+  their own notebook — `circuits/wdm_sax.ipynb` calls `sax.circuit()` to compose
+  cached, genuinely FDTD-measured
   coupler and delay-arm models (preserving complex S-parameters, magnitude
   *and* phase, not just power) into a working interferometric filter, then
   exporting it as GDS.
@@ -44,15 +47,18 @@ any expensive or consequential step.
   `circuits/wdm_mux4_sax.ipynb`'s 4-channel WDM demultiplexer, moving from a
   2-coupler to a 4-coupler lattice — validated with real FDTD data, not just
   an ideal model — improved the worst channel's extinction ratio from
-  **1.7 dB to 10.1 dB**. That notebook also produces this repo's first
-  *branching* (non-series) GDS layout.
+  **1.7 dB to 10.1 dB**. That notebook also exports the branching
+  (non-series) GDS layout of the full tree.
 - **Includes a genuinely advanced simulation technique**, not just parameter
-  sweeps: `04_bend_topology_optimization.ipynb` uses Meep's adjoint-based
-  topology optimization (`autograd` + `nlopt`) to optimize a waveguide
-  bend's geometry directly from a gradient of the simulated field.
-- **10 of 12 components are fully validated end-to-end** — cached ground-truth
-  YAML *and* a Meep-free SAX model — not just a one-off simulation notebook;
-  see the "cached model" column below.
+  sweeps: `si/notebooks/04_bend_topology_optimization.ipynb` uses Meep's
+  adjoint-based topology optimization (`autograd` + `nlopt`) to optimize a
+  waveguide bend's geometry directly from a gradient of the simulated field,
+  and `04b` makes it robust to ±fabrication bias. The same adjoint machinery
+  drives the meta-grating and topological-transition studies.
+- **13 of the 14 component notebooks (Si, SiN, TFLN) are validated
+  end-to-end** — cached ground-truth YAML *and* a Meep-free SAX model — not
+  just a one-off simulation notebook; only the 2D grating coupler is not yet
+  promoted. See the "cached model" columns below.
 
 ## Components
 
@@ -82,7 +88,7 @@ nitride) and `tfln/` (thin-film lithium niobate). Each platform has its own
 
 | Notebook (`tfln/notebooks/`) | Component | Cached model |
 |---|---|---|
-| `01_tfln_mzm.ipynb` | Thin-film LiNbO₃ electro-optic MZM (Pockels VπL, traveling-wave bandwidth); formerly `notebooks/11_tfln_mzm.ipynb` | not yet promoted |
+| `01_tfln_mzm.ipynb` | Thin-film LiNbO₃ electro-optic MZM (Pockels VπL, traveling-wave bandwidth); formerly `notebooks/11_tfln_mzm.ipynb` | ✅ (voltage-dependent) |
 
 ### SiN track (`sin/`, Meep 2D)
 
@@ -93,10 +99,10 @@ compared against a Si reference calibrated the same way (500 × 220 nm, core 2.9
 are benchmarked against published 3D results. Same modules, same band; own data and design
 points (`sin/data/`), read by `models/sin_*.py`.
 
-| Notebook | Component |
-|---|---|
-| `sin/notebooks/01_sin_waveguide_baseline.ipynb` | SiN straight waveguide (n_eff, n_g) and mode comparison with Si |
-| `sin/notebooks/02_sin_bent_waveguide.ipynb` | SiN bends (radius sweep, circular vs. Euler) and the radius needed vs. Si |
+| Notebook | Component | Cached model |
+|---|---|---|
+| `sin/notebooks/01_sin_waveguide_baseline.ipynb` | SiN straight waveguide (n_eff, n_g) and mode comparison with Si | ✅ |
+| `sin/notebooks/02_sin_bent_waveguide.ipynb` | SiN bends (radius sweep, circular vs. Euler) and the radius needed vs. Si | ✅ |
 
 See [sin/README.md](sin/README.md).
 
@@ -187,6 +193,7 @@ circuits/              SAX circuit-level compositions + GDS exports
 3d/                    3D track (fdtdx): notebooks 01b/09b, own data/ and environment.yml
 meta/                  SiN meta-grating study (Meep 2D): notebooks 01-04, cached data, literature
 topological/           spin-/valley-Hall photonic crystals (Meep/MPB 2D): notebooks 01-03, scripts, cached data
+sin_cavity/            SiN photonic-crystal nanocavities (Meep/MPB 3D): notebooks 01-03, cached data
 src/pic_toolkit/
   meep_sim/            Meep FDTD simulation modules (one per component)
   fdtdx_sim/           fdtdx 3D FDTD modules (3D track)
