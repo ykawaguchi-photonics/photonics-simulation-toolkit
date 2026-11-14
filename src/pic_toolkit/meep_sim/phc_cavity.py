@@ -202,6 +202,15 @@ def run_cavity(geometry: list, cell: mp.Vector3, fcen: float, df: float, resolut
 def slab_te_bands(r_a: float, t_a: float, k_points: list, resolution: int = 16, sz: float = 6.0,
                   num_bands: int = 4) -> np.ndarray:
     """TE-like (z-even) bands of a triangular air-hole lattice in a suspended slab, f in c/a."""
+    return slab_bands(r_a, t_a, k_points, resolution, sz, num_bands, parity="zeven")
+
+
+def slab_bands(r_a: float, t_a: float, k_points: list, resolution: int = 16, sz: float = 6.0,
+               num_bands: int = 4, parity: str = "zeven") -> np.ndarray:
+    """Bands of a triangular air-hole lattice in a suspended slab, f in c/a.
+
+    parity "zeven" gives the TE-like bands (E mostly in-plane), "zodd" the TM-like bands.
+    """
     from meep import mpb
 
     lat = mp.Lattice(size=mp.Vector3(1, 1, sz), basis1=mp.Vector3(math.sqrt(3) / 2, 0.5),
@@ -210,7 +219,7 @@ def slab_te_bands(r_a: float, t_a: float, k_points: list, resolution: int = 16, 
            mp.Cylinder(radius=r_a, height=t_a, material=mp.air)]
     ms = mpb.ModeSolver(geometry_lattice=lat, geometry=geo, k_points=k_points, resolution=resolution,
                         num_bands=num_bands)
-    ms.run_zeven()
+    {"zeven": ms.run_zeven, "zodd": ms.run_zodd}[parity]()
     return np.array(ms.all_freqs)
 
 
