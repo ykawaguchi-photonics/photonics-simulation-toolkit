@@ -58,9 +58,9 @@ variants:
       n_g_dispersive: 4.3302
       mpb_resolution: 64
     p_pi_mW: 16.833
-    dneff_per_W_per_m: 3.8910792523806494e-05
+    dneff_per_W_per_m: 3.89107925521523e-05
     tau_us: 7.534
-    f3db_kHz: 13.44
+    f3db_kHz: 22.38
     p_pi_tau_mW_us: 126.8
     loss_db_per_cm: 0.0
     crosstalk_5um: 0.3108
@@ -82,9 +82,9 @@ variants:
       n_g_dispersive: 4.3302
       mpb_resolution: 64
     p_pi_mW: 11.56
-    dneff_per_W_per_m: 5.666333433020023e-05
+    dneff_per_W_per_m: 5.666333437155425e-05
     tau_us: 10.38
-    f3db_kHz: 10.21
+    f3db_kHz: 16.94
     p_pi_tau_mW_us: 120.0
     loss_db_per_cm: 0.0
     crosstalk_5um: 0.0285
@@ -102,11 +102,11 @@ variants:
       n_g_dispersive: 4.0018
       mpb_resolution: 64
     p_pi_mW: 18.67
-    dneff_per_W_per_m: 3.5083556487024446e-05
+    dneff_per_W_per_m: 3.508352636164405e-05
     tau_us: 4.143
-    f3db_kHz: 20.07
+    f3db_kHz: 27.77
     p_pi_tau_mW_us: 77.3
-    loss_db_per_cm: 0.0569869466261179
+    loss_db_per_cm: 0.057085207247681055
     crosstalk_5um: null
     crosstalk_10um: null
 benchmark:

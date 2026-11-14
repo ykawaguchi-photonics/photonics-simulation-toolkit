@@ -194,8 +194,12 @@ def perturbation_dneff(mode: ModeResult, dn_si_map: np.ndarray, dn_ox_map: np.nd
     den = np.sum(eps * mode.E2)
     num_si = np.sum(np.where(mode.is_si, mode.n_si * dn_si_map, 0.0) * mode.E2)
     num_ox = np.sum(np.where(mode.is_si, 0.0, mode.n_ox * dn_ox_map) * mode.E2)
-    return {"dneff": float(mode.n_g * (num_si + num_ox) / den),
-            "si_share": float(num_si / (num_si + num_ox)) if (num_si + num_ox) else float("nan"),
+    # A complex map (a phasor temperature in the frequency response) gives a complex
+    # Delta n_eff: keep it complex, never cast it to float.
+    dneff = mode.n_g * (num_si + num_ox) / den
+    total = num_si + num_ox
+    return {"dneff": complex(dneff) if np.iscomplexobj(dneff) else float(dneff),
+            "si_share": float(np.real(num_si / total)) if total else float("nan"),
             "confinement_si": float(np.sum(np.where(mode.is_si, eps * mode.E2, 0)) / den)}
 
 
@@ -204,7 +208,7 @@ def thermo_optic_dneff(mode: ModeResult, temperature_fn, dndT_si: float, dndT_ox
     (e.g. thermal.interpolator). Uses `perturbation_dneff`."""
     X, Y = np.meshgrid(mode.x_um, mode.y_um)
     dT = np.asarray(temperature_fn(np.column_stack([Y.ravel(), X.ravel()]))).reshape(X.shape)
-    return {**perturbation_dneff(mode, dndT_si * dT, dndT_ox * dT), "dT_peak_in_si": float(dT[mode.is_si].max())}
+    return {**perturbation_dneff(mode, dndT_si * dT, dndT_ox * dT), "dT_peak_in_si": float(np.abs(dT[mode.is_si]).max())}
 
 
 def group_index_material_dispersive(params: dict | None = None, dwl_um: float = 0.01) -> float:
