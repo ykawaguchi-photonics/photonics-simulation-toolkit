@@ -1,0 +1,143 @@
+component: thermo_optic_phase_shifter
+wl0_um: 1.31
+stack:
+  si_um: 0.22
+  slab_um: 0.09
+  box_um: 2.0
+  clad_top_um: 2.5
+  substrate_um: 6.0
+  half_width_um: 20.0
+  h_conv: 10.0
+materials:
+  n_si: 3.50488
+  n_sio2: 1.4468
+  dndT_si_per_K: 0.0001936
+  dndT_sio2_per_K: 1.0e-05
+  thermal:
+    si_substrate:
+      k: 148.0
+      rho: 2330.0
+      cp: 711.0
+    si_wg:
+      k: 90.0
+      rho: 2330.0
+      cp: 711.0
+    si_slab:
+      k: 55.0
+      rho: 2330.0
+      cp: 711.0
+    si_doped:
+      k: 25.0
+      rho: 2330.0
+      cp: 711.0
+    sio2:
+      k: 1.38
+      rho: 2203.0
+      cp: 709.0
+    tin:
+      k: 28.0
+      rho: 5240.0
+      cp: 598.0
+    air:
+      k: 0.026
+      rho: 1.177
+      cp: 1006.0
+  sources: Frey 2006 (Si n, dn/dT), Malitson 1965 (SiO2), Jacques 2019 Table 3 (thermal)
+variants:
+  tin:
+    geometry:
+      heater: TiN
+      heater_width_um: 2.0
+      heater_thickness_um: 0.2
+      heater_gap_above_si_um: 2.0
+    optical:
+      wg_width_um: 0.4
+      slab_um: 0.0
+      n_eff: 2.55936
+      n_g_waveguide: 4.1431
+      n_g_dispersive: 4.3302
+      mpb_resolution: 64
+    p_pi_mW: 16.833
+    dneff_per_W_per_m: 3.8910792523806494e-05
+    tau_us: 7.534
+    f3db_kHz: 13.44
+    p_pi_tau_mW_us: 126.8
+    loss_db_per_cm: 0.0
+    crosstalk_5um: 0.3108
+    crosstalk_10um: 0.0578
+  tin_trench:
+    geometry:
+      heater: TiN
+      heater_width_um: 2.0
+      heater_thickness_um: 0.2
+      heater_gap_above_si_um: 2.0
+      trench_inner_edge_um: 3.0
+      trench_width_um: 1.5
+      trench_depth: top oxide + BOX, to the substrate
+    optical:
+      wg_width_um: 0.4
+      slab_um: 0.0
+      n_eff: 2.55936
+      n_g_waveguide: 4.1431
+      n_g_dispersive: 4.3302
+      mpb_resolution: 64
+    p_pi_mW: 11.56
+    dneff_per_W_per_m: 5.666333433020023e-05
+    tau_us: 10.38
+    f3db_kHz: 10.21
+    p_pi_tau_mW_us: 120.0
+    loss_db_per_cm: 0.0
+    crosstalk_5um: 0.0285
+    crosstalk_10um: 0.0062
+  n_doped:
+    geometry:
+      heater: N++ Si in the 90 nm slab
+      buffer_um: 0.8
+      doped_width_um: 1.0
+    optical:
+      wg_width_um: 0.4
+      slab_um: 0.09
+      n_eff: 2.69636
+      n_g_waveguide: 3.8268
+      n_g_dispersive: 4.0018
+      mpb_resolution: 64
+    p_pi_mW: 18.67
+    dneff_per_W_per_m: 3.5083556487024446e-05
+    tau_us: 4.143
+    f3db_kHz: 20.07
+    p_pi_tau_mW_us: 77.3
+    loss_db_per_cm: 0.0569869466261179
+    crosstalk_5um: null
+    crosstalk_10um: null
+benchmark:
+  reference: Jacques et al., Opt. Express 27, 10456 (2019)
+  wl_um: 1.55
+  dndT: 0.00018
+  p_pi_mW:
+    TiN: 23.85
+    N++: 25.19
+  p_pi_paper_calc_mW:
+    TiN: 23.9
+    N++: 25.2
+  p_pi_paper_meas_mW:
+    TiN: 21.4
+    N++: 22.8
+  tau_us:
+    TiN: 7.53
+    N++: 4.23
+  tau_paper_meas_us:
+    TiN: 5.6
+    N++: 2.2
+model_assumptions:
+- 2D cross-section, uniform along the heater (heater length >> cross-section)
+- substrate 6 um deep in the model with an isothermal bottom; 6 -> 150 um changes
+  P_pi by ~-4 % and tau by ~+10 %
+- 'time constants 1.3-2x slower than measured in the benchmark: use them as relative
+  values'
+- crosstalk beyond ~15 um is set by 3D substrate spreading and is not predicted
+- 'N++ loss: Drude lambda^2 scaling of Jacques'' 1.55 um absorption (estimate)'
+- optics non-dispersive at wl0 except n_g_dispersive
+provenance:
+  notebook: si_active/notebooks/01_thermo_optic_phase_shifter.ipynb
+  date: '2026-11-14'
+  solver: pic_toolkit.active.thermal (FV) + MPB

@@ -2,7 +2,7 @@
 
 An end-to-end toolkit for building, physically validating, and composing
 photonic integrated circuit (PIC) components on silicon, silicon nitride and
-thin-film lithium niobate — from [Meep](https://meep.readthedocs.io/) FDTD
+thin-film lithium niobate, including active silicon devices on the real cross-section — from [Meep](https://meep.readthedocs.io/) FDTD
 simulation, through [SAX](https://flaport.github.io/sax/) circuit-level
 composition, to [gdsfactory](https://gdsfactory.github.io/gdsfactory/) GDS
 layout output. Alongside the component library are studies with the same
@@ -55,7 +55,7 @@ any expensive or consequential step.
   waveguide bend's geometry directly from a gradient of the simulated field,
   and `04b` makes it robust to ±fabrication bias. The same adjoint machinery
   drives the meta-grating and topological-transition studies.
-- **13 of the 14 component notebooks (Si, SiN, TFLN) are validated
+- **14 of the 15 component notebooks (Si, Si active, SiN, TFLN) are validated
   end-to-end** — cached ground-truth YAML *and* a Meep-free SAX model — not
   just a one-off simulation notebook; only the 2D grating coupler is not yet
   promoted. See the "cached model" columns below.
@@ -89,6 +89,16 @@ nitride) and `tfln/` (thin-film lithium niobate). Each platform has its own
 | Notebook (`tfln/notebooks/`) | Component | Cached model |
 |---|---|---|
 | `01_tfln_mzm.ipynb` | Thin-film LiNbO₃ electro-optic MZM (Pockels VπL, traveling-wave bandwidth); formerly `notebooks/11_tfln_mzm.ipynb` | ✅ (voltage-dependent) |
+
+### Si active track (`si_active/`, real cross-section)
+
+Active devices act through the real cross-section, so this track solves the 220 nm SOI
+cross-section with bulk indices in MPB and couples it to a 2D finite-volume heat solver
+(`src/pic_toolkit/active/`). Designed at 1.31 µm; see [si_active/README.md](si_active/README.md).
+
+| Notebook (`si_active/notebooks/`) | Component | Cached model |
+|---|---|---|
+| `01_thermo_optic_phase_shifter.ipynb` | TiN and N++ heaters: P_π 16.8 / 18.7 mW (11.6 mW with trenches), τ, f_3dB, crosstalk, ring tuning; Jacques et al. 2019 P_π reproduced within 0.2 % | ✅ |
 
 ### SiN track (`sin/`, Meep 2D)
 
@@ -194,9 +204,11 @@ circuits/              SAX circuit-level compositions + GDS exports
 meta/                  SiN meta-grating study (Meep 2D): notebooks 01-04, cached data, literature
 topological/           spin-/valley-Hall photonic crystals (Meep/MPB 2D): notebooks 01-03, scripts, cached data
 sin_cavity/            SiN photonic-crystal nanocavities (Meep/MPB 3D): notebooks 01-03, cached data
+si_active/             Si active devices on the real cross-section (MPB + FV heat): notebook 01, own data/
 src/pic_toolkit/
   meep_sim/            Meep FDTD simulation modules (one per component)
   fdtdx_sim/           fdtdx 3D FDTD modules (3D track)
+  active/              si_active: FV heat solver, MPB cross-section, thermo-optic figures of merit
   models/               Meep-free SAX-compatible twins, read cached design points
   circuits/             SAX circuit building blocks (lattice, mux tree)
   params.py, sweep.py, sparams.py, checks.py, design_points.py, style.py, viz.py
